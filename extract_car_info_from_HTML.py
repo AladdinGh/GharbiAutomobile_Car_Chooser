@@ -19,7 +19,7 @@ def extract_netto_price(prices):
 
 
 
-def extract_features_to_HTML(html_content):
+def extract_features_from_HTML(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Extract specific elements from the HTML using BeautifulSoup
@@ -73,20 +73,3 @@ def extract_features_to_HTML(html_content):
     df = pd.DataFrame([data])
 
     return df
-
-
-# Example usage:
-if __name__ == "__main__":
-    html_content = input("Paste or type the HTML content for the car listing: ")
-   
-    try:
-        # Extract key features from the HTML content
-        extracted_features_df = extract_features_to_HTML(html_content)
-
-        # Save extracted features to Excel
-        output_file_path = 'extracted_features.xlsx'
-        extracted_features_df.to_excel(output_file_path, index=False)
-        print(f"Extracted features saved to {output_file_path}")
-    except Exception as e:
-        print(f"Error extracting features: {e}")
-    #extract_features_to_excel(html_content, link)

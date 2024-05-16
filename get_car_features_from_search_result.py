@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 from get_HTML_source_code_from_link import get_HTML_source_code_from_link
-from extract_car_info_from_HTML import extract_features_to_HTML
+from extract_car_info_from_HTML import extract_features_from_HTML
 
 
 def get_car_features_from_search_result(html_file_path, output_excel_file):
@@ -24,7 +24,7 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
         source_pages = [get_HTML_source_code_from_link(url) for url in modified_urls]
         
         # Extract key features from the HTML content and combine into a single DataFrame
-        extracted_features_df_list = [extract_features_to_HTML(source_page) for source_page in source_pages]
+        extracted_features_df_list = [extract_features_from_HTML(source_page) for source_page in source_pages]
         extracted_features_df = pd.concat(extracted_features_df_list, ignore_index=True)
 
         # Create a DataFrame to hold the data
@@ -45,6 +45,6 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
 
 # Example usage:
 html_file_path = 'SuchErgebnis.txt'
-output_excel_file = 'car_data.xlsx'
+output_excel_file = 'search_list_car_features.xlsx'
 
 get_car_features_from_search_result(html_file_path, output_excel_file)
