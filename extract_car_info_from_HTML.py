@@ -24,10 +24,18 @@ def extract_features_from_HTML(html_content):
 
     # Extract specific elements from the HTML using BeautifulSoup
     titles = [title.get_text().strip() for title in soup.find_all(class_=["listing-title", "listing-subtitle"])]
-    prices = [price.get_text().strip() for price in soup.find_all(class_=["main-price-and-rating-row", "price-and-financing-row-secondary"])]
+    link = soup.find('link', {'rel': 'canonical'})
+    print("link", link)
+    
+    prices = [price.get_text().strip() for price in soup.find_all(class_=["main-price-and-rating-row", "price-and-financing-row-secondary"])]   
+    print("prices", prices)
+    
     dealer_name = soup.find(class_=["link--muted u-text-decoration-none seller-title"]).get_text().strip()
+    print("dealer_name", dealer_name)     
+    
+    
     dealer_location = soup.find(class_=["seller-address"]).get_text().strip()
-
+    print("dealer_location", dealer_location)
     # Extract key features and map them to attribute-value pairs
     main_features = {}
     labels = soup.find_all(class_=["key-feature__label"])
@@ -36,7 +44,9 @@ def extract_features_from_HTML(html_content):
         label_text = label.get_text().strip()
         value_text = value.get_text().strip()
         main_features[label_text] = value_text
-
+        
+        
+    print("main_features", main_features)
     # Extract technical features and map them to attribute-value pairs
     technical_features = {}
     rows = soup.find_all(class_="g-row u-margin-bottom-9")
@@ -48,12 +58,25 @@ def extract_features_from_HTML(html_content):
             label_text = label_element.get_text().strip()
             value_text = value_element.get_text().strip()
             technical_features[label_text] = value_text
-
+    
+    print("technical_features", technical_features)
+    
+    
     # Extract equipment and combine into a single column
-    equipment = ', '.join(item.get_text().strip() for item in soup.find_all(class_=["bullet-list"]))
+    try:
+        equipment = ', '.join(item.get_text().strip() for item in soup.find_all(class_=["bullet-list"]))
+        print("equipment", equipment)
+    except Exception as e:
+        equipment = " "
+        print("equipment not found")
 
     # Extract description
-    description = soup.find(class_=["g-col-12 description"]).get_text().strip()
+    try:    
+        description = soup.find(class_=["g-col-12 description"]).get_text().strip()
+        print("description", description)
+    except Exception as e:
+        description = " "
+        print("description not found")
 
     # Create a DataFrame with the extracted data
     data = {
@@ -63,13 +86,12 @@ def extract_features_from_HTML(html_content):
         'Netto Price': extract_netto_price(prices),
         'Dealer Name': dealer_name,
         'Dealer Location': dealer_location,
-        #'Link': link,  # Include the link in the extracted features
         **main_features,
         **technical_features,
         'Equipment': equipment,
         'Description': description
     }
-
+    
     df = pd.DataFrame([data])
-
+    print(df)
     return df
