@@ -1,8 +1,6 @@
 import pandas as pd
 import re 
 
-
-
 def preprocess_dataframe(file_path):
     try:
         # Read the CSV file
@@ -10,51 +8,37 @@ def preprocess_dataframe(file_path):
         
         ########################## Create a column for each equipment ########################
         # Split the 'Equipment' column by commas and expand it into multiple columns
-        equipment_split = df['Equipment'].str.split(',', expand=True)
-        
-        # Extract unique items from all the split columns
-        unique_items_list = equipment_split.stack().unique().tolist()
-
-        # Define all possible equipment items
-        all_equipment_items = unique_items_list
-
-        # Iterate through each cell in the 'Equipment' column
-        for item in all_equipment_items:
-            df[item] = df['Equipment'].apply(lambda x: 'yes' if item in x.split(',') else 'no')
-        
-        # Drop the original 'Equipment' column
-        df.drop(columns=['Equipment'], inplace=True)
+        equipment_split = df['Equipment'].str.get_dummies(sep=',')
+        df = pd.concat([df, equipment_split], axis=1)
         
         ########################## Remove Brutto/Netto from Price ###########################
         # Function to clean the Price column
         def clean_price(price):
             if isinstance(price, str):
-                match = re.search(r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*€', price)
+                match = re.search(r'(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€', price)
                 if match:
                     return match.group(1).replace('.', '').replace(',', '.')
-                else:
-                    match = re.search(r'(\d{1,3}(?:\.\d{3})*)\s*€', price)
-                    if match:
-                        return match.group(1).replace('.', '')
             return None
         
-        # Apply the clean_price function to the 'Price' column
+        # Apply the clean_price function to the 'Price' columns
         df['Brutto Price'] = df['Brutto Price'].apply(clean_price)
         df['Netto Price'] = df['Netto Price'].apply(clean_price)
         
-        ########################## seperate KW from PS ###########################
-   
-        df['KW'] = df['Leistung'].apply(lambda x: re.search(r'(\d+)\s*kW', x).group(1) if isinstance(x, str) and re.search(r'(\d+)\s*kW', x) else None)
+        ########################## Separate KW from PS ###########################
+        df['KW'] = df['Leistung'].str.extract(r'(\d+)\s*kW', expand=False)
+        df['PS'] = df['Leistung'].str.extract(r'(\d+)\s*PS', expand=False)
         
-        # Extract the PS value
-        df['PS'] = df['Leistung'].apply(lambda x: re.search(r'(\d+)\s*PS', x).group(1) if isinstance(x, str) and re.search(r'(\d+)\s*PS', x) else None)
+        ########################## Convert Kilometerstand to numerical ###########################
+        def clean_kilometerstand(km):
+            if isinstance(km, str):
+                numeric_km = re.sub(r'[^\d]', '', km)
+                return int(numeric_km) if numeric_km else None
+            return None
         
-        # Drop the original 'Leistung' column
-        #df.drop(columns=['Leistung'], inplace=True)
-        
+        df['Kilometerstand'] = df['Kilometerstand'].apply(clean_kilometerstand)
         
         ####################################################################################
-        # Save the preprocessed DataFrame to an Excel file
+        # Save the preprocessed DataFrame to Excel and CSV files
         excel_file_path = 'preprocessed_df.xlsx'
         df.to_excel(excel_file_path, index=False)
         csv_file_path = 'preprocessed_df.csv'
