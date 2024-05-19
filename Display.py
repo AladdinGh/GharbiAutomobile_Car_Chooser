@@ -64,7 +64,7 @@ def on_click(event):
         month_index = int(event.xdata)  # Get the index of the clicked point
         year, month = months_years[month_index]
         selected_cars = df[(df['Year'] == year) & (df['Month'] == month)][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
-        urls_and_features = selected_cars.apply(lambda row: [row['URL'][:30] + '...', row['Brutto Price'], row['Kilometerstand'], row['Farbe'], row['Farbe (Hersteller)']], axis=1)
+        urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
         urls_and_features_list = urls_and_features.values.tolist()
         if urls_and_features_list:
             # Create a new popup window
@@ -80,11 +80,11 @@ def on_click(event):
             
             # Create a table to display URLs and features
             for r, row in enumerate(urls_and_features_list):
-                for c, value in enumerate(row[:-1]):  # Exclude the last element (Farbe (Hersteller))
+                for c, value in enumerate(row):
                     if c == 0:
-                        label = tk.Label(popup_window, text=value, bg='#ffffff', font=('Helvetica', 10, 'underline'), cursor='hand2')
+                        label = tk.Label(popup_window, text=value[:30] + '...', bg='#ffffff', font=('Helvetica', 10, 'underline'), cursor='hand2')
                         label.grid(row=r+1, column=c, padx=5, pady=2, sticky="w")
-                        label.bind('<Button-1>', lambda e, url=row[-1]: open_url_in_edge(url))  # Pass the original URL
+                        label.bind('<Button-1>', lambda e, url=value: open_url_in_edge(url))  # Pass the original URL
                     else:
                         label = tk.Label(popup_window, text=value, bg='#ffffff', font=('Helvetica', 10), wraplength=200)
                         label.grid(row=r+1, column=c, padx=5, pady=2, sticky="w")
