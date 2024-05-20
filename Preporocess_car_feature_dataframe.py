@@ -1,5 +1,5 @@
 import pandas as pd
-import re 
+import re
 
 def preprocess_dataframe(file_path):
     try:
@@ -17,7 +17,7 @@ def preprocess_dataframe(file_path):
             if isinstance(price, str):
                 match = re.search(r'(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€', price)
                 if match:
-                    return match.group(1).replace('.', '').replace(',', '.')
+                    return float(match.group(1).replace('.', '').replace(',', '.'))
             return None
         
         # Apply the clean_price function to the 'Price' columns
@@ -25,8 +25,8 @@ def preprocess_dataframe(file_path):
         df['Netto Price'] = df['Netto Price'].apply(clean_price)
         
         ########################## Separate KW from PS ###########################
-        df['KW'] = df['Leistung'].str.extract(r'(\d+)\s*kW', expand=False)
-        df['PS'] = df['Leistung'].str.extract(r'(\d+)\s*PS', expand=False)
+        df['KW'] = df['Leistung'].str.extract(r'(\d+)\s*kW', expand=False).astype(float)
+        df['PS'] = df['Leistung'].str.extract(r'(\d+)\s*PS', expand=False).astype(float)
         
         ########################## Convert Kilometerstand to numerical ###########################
         def clean_kilometerstand(km):
@@ -36,6 +36,30 @@ def preprocess_dataframe(file_path):
             return None
         
         df['Kilometerstand'] = df['Kilometerstand'].apply(clean_kilometerstand)
+        
+        ########################## Extract first value from Verbrauch ###########################
+        def extract_first_consumption(verbrauch):
+            if isinstance(verbrauch, str):
+                match = re.search(r'(\d{1,2},\d)\s*l/100km', verbrauch)
+                if match:
+                    return float(match.group(1).replace(',', '.'))
+            return None
+        
+        df['Kraftstoffverbrauch2'] = df['Verbrauch'].apply(extract_first_consumption)
+        
+        ########################## Extract values from Energieverbrauch (komb.)2 ##################
+        def extract_energy_consumption(energy):
+            if isinstance(energy, str):
+                match = re.search(r'(\d{1,2},\d)\s*l/100km', energy)
+                if match:
+                    return float(match.group(1).replace(',', '.'))
+            return None
+        
+        df['Kraftstoffverbrauch2'] = df['Energieverbrauch (komb.)2'].apply(extract_energy_consumption).combine_first(df['Kraftstoffverbrauch2'])
+        
+        ########################## Rename and Delete Columns #############################
+        df.rename(columns={'Kraftstoffverbrauch2': 'Kraftstoffverbrauch'}, inplace=True)
+        df.drop(columns=['Energieverbrauch (komb.)2'], inplace=True)
         
         ####################################################################################
         # Save the preprocessed DataFrame to Excel and CSV files
