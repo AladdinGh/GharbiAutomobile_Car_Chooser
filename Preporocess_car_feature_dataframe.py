@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import numpy as np
 
 def preprocess_dataframe(file_path):
     try:
@@ -45,6 +46,8 @@ def preprocess_dataframe(file_path):
                     return float(match.group(1).replace(',', '.'))
             return None
         
+        
+        # Update Kraftstoffverbrauch2 with values from Verbrauch
         df['Kraftstoffverbrauch2'] = df['Verbrauch'].apply(extract_first_consumption)
         
         ########################## Extract values from Energieverbrauch (komb.)2 ##################
@@ -55,12 +58,15 @@ def preprocess_dataframe(file_path):
                     return float(match.group(1).replace(',', '.'))
             return None
         
-        df['Kraftstoffverbrauch2'] = df['Energieverbrauch (komb.)2'].apply(extract_energy_consumption).combine_first(df['Kraftstoffverbrauch2'])
+        # Update Kraftstoffverbrauch2 with values from Energieverbrauch (komb.)2 where 0
+        df['Kraftstoffverbrauch2'] = df['Kraftstoffverbrauch2'].combine_first(df['Energieverbrauch (komb.)2'].apply(extract_energy_consumption))
         
         ########################## Rename and Delete Columns #############################
         df.rename(columns={'Kraftstoffverbrauch2': 'Kraftstoffverbrauch'}, inplace=True)
         df.drop(columns=['Energieverbrauch (komb.)2'], inplace=True)
         
+        
+        df['Kraftstoffverbrauch'] = df['Kraftstoffverbrauch'].fillna(0)
         ####################################################################################
         # Save the preprocessed DataFrame to Excel and CSV files
         excel_file_path = 'preprocessed_df.xlsx'
