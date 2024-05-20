@@ -5,6 +5,17 @@ import calendar
 import tkinter as tk
 import webbrowser
 
+# Function to open URL in Microsoft Edge
+def open_url_in_edge(url):
+    webbrowser.register('edge', None, webbrowser.BackgroundBrowser("C://Program Files (x86)//Microsoft//Edge//Application//msedge.exe"))
+    webbrowser.get('edge').open(url)
+
+# Function to fill missing values in 'Farbe' with values from 'Farbe (Hersteller)' if available
+def fill_missing_color(row):
+    if pd.isnull(row['Farbe']):
+        return row['Farbe (Hersteller)']
+    return row['Farbe']
+
 def plot_cars_by_month_and_year(file_path):
     # Read the preprocessed DataFrame
     df = pd.read_csv(file_path)
@@ -13,12 +24,6 @@ def plot_cars_by_month_and_year(file_path):
     df['Erstzulassung'] = pd.to_datetime(df['Erstzulassung']).dt.to_period('M')
     df['Month'] = df['Erstzulassung'].dt.month
     df['Year'] = df['Erstzulassung'].dt.year
-
-    # Function to fill missing values in 'Farbe' with values from 'Farbe (Hersteller)' if available
-    def fill_missing_color(row):
-        if pd.isnull(row['Farbe']):
-            return row['Farbe (Hersteller)']
-        return row['Farbe']
 
     # Fill missing colors
     df['Farbe'] = df.apply(fill_missing_color, axis=1)
@@ -52,11 +57,6 @@ def plot_cars_by_month_and_year(file_path):
 
     plt.grid(axis='x')
     plt.tight_layout()
-
-    # Function to open URL in Microsoft Edge
-    def open_url_in_edge(url):
-        webbrowser.register('edge', None, webbrowser.BackgroundBrowser("C://Program Files (x86)//Microsoft//Edge//Application//msedge.exe"))
-        webbrowser.get('edge').open(url)
 
     # Function to display car URLs and basic features for selected month and year
     def on_click(event):
@@ -94,3 +94,86 @@ def plot_cars_by_month_and_year(file_path):
     plt.gcf().canvas.mpl_connect('button_press_event', on_click)
 
     plt.show()
+
+def plot_cars_by_price_category(file_path):
+    # Read the preprocessed DataFrame
+    df = pd.read_csv(file_path)
+
+    # Fill missing colors
+    df['Farbe'] = df.apply(fill_missing_color, axis=1)
+
+    # Define price categories with bins of 2000 Euros
+    price_bins = list(range(10000, 52000, 2000))  # 10000 to 50000 in increments of 2000
+    price_labels = [f"{price_bins[i]} to {price_bins[i+1]}" for i in range(len(price_bins) - 1)]
+    
+    # Create a 'Price Category' column based on 'Brutto Price'
+    df['Price Category'] = pd.cut(df['Brutto Price'], bins=price_bins, labels=price_labels, right=False)
+    
+    # Group by 'Price Category' and count the number of cars
+    car_count_by_price_category = df['Price Category'].value_counts().sort_index().reset_index()
+    car_count_by_price_category.columns = ['Price Category', 'Car Count']
+
+    # Plot the results
+    plt.figure(figsize=(15, 3))
+    
+    # Plot circles for each price category
+    for i, row in car_count_by_price_category.iterrows():
+        price_category = row['Price Category']
+        car_count = row['Car Count']
+        plt.scatter(i, 0, s=car_count * 200, alpha=0.5)
+        plt.text(i, 0, car_count, ha='center', va='center', color='white')
+
+    # Set x-axis ticks and labels
+    plt.xticks(range(len(price_labels)), price_labels, rotation=45, ha='right')
+
+    # Hide y-axis ticks and labels
+    plt.yticks([])
+
+    # Set labels and title
+    plt.xlabel('Price Category')
+    plt.title('Number of Cars by Price Category')
+
+    plt.grid(axis='x')
+    plt.tight_layout()
+
+    # Function to display car URLs and basic features for selected price category
+    def on_click(event):
+        if event.button == 1:  # Check if left mouse button clicked
+            price_index = int(event.xdata)  # Get the index of the clicked point
+            selected_price_category = price_labels[price_index]
+            selected_cars = df[df['Price Category'] == selected_price_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+            urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
+            urls_and_features_list = urls_and_features.values.tolist()
+            if urls_and_features_list:
+                # Create a new popup window
+                popup_window = tk.Tk()
+                popup_window.title('Selected Cars Information')
+                popup_window.configure(bg='#f0f0f0')  # Set background color
+
+                # Create a header row with attribute names
+                header = ['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']
+                for c, attr_name in enumerate(header):
+                    label = tk.Label(popup_window, text=attr_name, bg='#f0f0f0', font=('Helvetica', 10, 'bold'))
+                    label.grid(row=0, column=c, padx=5, pady=2, sticky="w")
+
+                # Create a table to display URLs and features
+                for r, row in enumerate(urls_and_features_list):
+                    for c, value in enumerate(row):
+                        if c == 0:
+                            label = tk.Label(popup_window, text=value[:30] + '...', bg='#ffffff', font=('Helvetica', 10, 'underline'), cursor='hand2')
+                            label.grid(row=r+1, column=c, padx=5, pady=2, sticky="w")
+                            label.bind('<Button-1>', lambda e, url=value: open_url_in_edge(url))  # Pass the original URL
+                        else:
+                            label = tk.Label(popup_window, text=value, bg='#ffffff', font=('Helvetica', 10), wraplength=200)
+                            label.grid(row=r+1, column=c, padx=5, pady=2, sticky="w")
+
+                popup_window.mainloop()
+
+    plt.gcf().canvas.mpl_connect('button_press_event', on_click)
+
+    plt.show()
+
+# Example usage:
+file_path = "preprocessed_df.csv"
+plot_cars_by_price_category(file_path)
+#plot_cars_by_month_and_year(file_path)

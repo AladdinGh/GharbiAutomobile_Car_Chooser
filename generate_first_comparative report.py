@@ -47,4 +47,4 @@ report += f"- URL: {min_price_car['URL']}\n"
 print(report)
 
 # Plot cars by month and year
-plot_cars_by_month_and_year(file_path)
+#plot_cars_by_month_and_year(file_path)
