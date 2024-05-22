@@ -604,12 +604,12 @@ def plot_cars_by_PS(file_path):
 
 # Example usage:
 file_path = "preprocessed_df.csv"
-plot_cars_by_PS(file_path)
+#plot_cars_by_PS(file_path)
 #plot_cars_by_hubraum(file_path)
 #plot_cars_by_farbe(file_path)
 #plot_cars_by_Kraftstoffverbrauch(file_path)
 # plot_cars_by_price_category(file_path)
-# plot_cars_by_month_and_year(file_path)
+plot_cars_by_month_and_year(file_path)
 # plot_cars_by_kilometerstand(file_path)
 
 

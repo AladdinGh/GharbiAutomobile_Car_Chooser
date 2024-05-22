@@ -9,9 +9,9 @@ def preprocess_dataframe(file_path):
         
         ########################## Create a column for each equipment ########################
         # Split the 'Equipment' column by commas and expand it into multiple columns
-        equipment_split = df['Equipment'].str.get_dummies(sep=',')
+        equipment_split = df['Equipment'].str.split(',').apply(lambda x: [s.strip() for s in x]).str.join('|').str.get_dummies()
         df = pd.concat([df, equipment_split], axis=1)
-        
+                
         ########################## Remove Brutto/Netto from Price ###########################
         # Function to clean the Price column
         def clean_price(price):
