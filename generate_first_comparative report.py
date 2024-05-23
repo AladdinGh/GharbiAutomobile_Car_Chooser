@@ -1,13 +1,14 @@
 import pandas as pd
+import pdfkit
 
-# Read the preprocessed DataFrame
-file_path = "preprocessed_df.csv"  # Replace with your preprocessed DataFrame file path
-df = pd.read_csv(file_path)
+# Read preprocessed data
+file_path = "preprocessed_df_Alexander_diesel.xlsx"
+df = pd.read_excel(file_path)
 
 # Convert 'Erstzulassung' to datetime format
 df['Erstzulassung'] = pd.to_datetime(df['Erstzulassung'], format='%m/%Y')
 
-# Define the number of bins for price ranges and mileage
+# Define the number of bins for price and mileage ranges
 num_bins = 3
 
 # Calculate price ranges
@@ -20,8 +21,8 @@ df['Construction Year'] = df['Erstzulassung'].dt.year
 min_year = df['Construction Year'].min()
 max_year = df['Construction Year'].max()
 
-# Generate bins for every year
-year_bins = range(min_year, max_year + 2)  # +2 to include the last year properly in the interval
+# Generate bins for each year
+year_bins = range(min_year, max_year + 2)
 
 # Calculate construction year ranges (yearly intervals)
 df['Year Bin'] = pd.cut(df['Construction Year'], bins=year_bins, right=False)
@@ -30,15 +31,15 @@ df['Year Bin'] = pd.cut(df['Construction Year'], bins=year_bins, right=False)
 mileage_bins = pd.cut(df['Kilometerstand'], bins=num_bins, retbins=True)[1]
 mileage_ranges = [(int(mileage_bins[i]), int(mileage_bins[i+1])) for i in range(len(mileage_bins)-1)]
 
-# Define a list of feature columns
-feature_columns = ['Abstandstempomat', 'Abstandswarner', 'Adaptives Kurvenlicht', 'Alarmanlage', 'Allradantrieb', 
+# Define a list of attribute columns
+feature_columns = ['Abstandstempomat', 'Abstandswarner', 'Adaptives Kurvenlicht', 'Alarmanlage', 'Allradantrieb',
                    'Allwetterreifen', 'Ambiente-Beleuchtung', 'Anhängerkupplung abnehmbar', 'Anhängerkupplung fest',
                    'Anhängerkupplung-Vorbereitung', 'Armlehne', 'Beheizbare Frontscheibe', 'Beheizbares Lenkrad',
-                   'Berganfahrassistent', 'Bi-Xenon Scheinwerfer', 'Blendfreies Fernlicht', 'Bluetooth', 
+                   'Berganfahrassistent', 'Bi-Xenon Scheinwerfer', 'Blendfreies Fernlicht', 'Bluetooth',
                    'Bordcomputer', 'CD-Spieler', 'Dachreling', 'ESP', 'Elektr. Fensterheber', 'Elektr. Heckklappe',
                    'Elektr. Seitenspiegel', 'Elektr. Sitzeinstellung', 'Elektr. Wegfahrsperre', 'Fernlichtassistent',
                    'Freisprecheinrichtung', 'Garantie', 'Gepäckraumabtrennung', 'Geschwindigkeitsbegrenzer',
-                   'Innenspiegel autom. abblendend', 'Isofix', 'Isofix Beifahrersitz', 'Kurvenlicht', 
+                   'Innenspiegel autom. abblendend', 'Isofix', 'Isofix Beifahrersitz', 'Kurvenlicht',
                    'LED-Scheinwerfer', 'LED-Tagfahrlicht', 'Lederlenkrad', 'Leichtmetallfelgen', 'Lichtsensor',
                    'Lordosenstütze', 'Multi-CD-Wechsler', 'Multifunktionslenkrad', 'Musikstreaming integriert',
                    'Müdigkeitswarner', 'Navigationssystem', 'Nebelscheinwerfer', 'Nichtraucher-Fahrzeug',
@@ -46,91 +47,208 @@ feature_columns = ['Abstandstempomat', 'Abstandswarner', 'Adaptives Kurvenlicht'
                    'Radio DAB', 'Raucherpaket', 'Regensensor', 'Reifendruckkontrolle', 'Reserverad', 'Schaltwippen',
                    'Scheckheftgepflegt', 'Scheinwerferreinigung', 'Schiebedach', 'Schlüssellose Zentralverriegelung',
                    'Servolenkung', 'Sitzheizung', 'Sitzheizung hinten', 'Skisack', 'Sommerreifen', 'Soundsystem',
-                   'Sportfahrwerk', 'Sportpaket', 'Sportsitze', 'Sprachsteuerung', 'Spurhalteassistent', 
-                   'Standheizung', 'Start/Stopp-Automatik', 'TV', 'Tagfahrlicht', 'Taxi', 'Tempomat', 
-                   'Totwinkel-Assistent', 'Touchscreen', 'Traktionskontrolle', 'Tuner/Radio', 'USB', 
+                   'Sportfahrwerk', 'Sportpaket', 'Sportsitze', 'Sprachsteuerung', 'Spurhalteassistent',
+                   'Standheizung', 'Start/Stopp-Automatik', 'TV', 'Tagfahrlicht', 'Taxi', 'Tempomat',
+                   'Totwinkel-Assistent', 'Touchscreen', 'Traktionskontrolle', 'Tuner/Radio', 'USB',
                    'Verkehrszeichenerkennung', 'WLAN / Wifi Hotspot', 'Winterpaket', 'Winterreifen', 'Xenonscheinwerfer',
                    'Zentralverriegelung', 'ABS']
 
-# Calculate the number of features for each car
+# Filter out feature columns that are not present in the DataFrame
+feature_columns = [col for col in feature_columns if col in df.columns]
+
+# Translation dictionary
+feature_columns_translation = {
+    'Abstandstempomat': 'Régulateur de distance',
+    'Abstandswarner': 'Avertisseur de distance',
+    'Adaptives Kurvenlicht': 'Éclairage adaptatif en virage',
+    'Alarmanlage': 'Alarme',
+    'Allradantrieb': 'Transmission intégrale',
+    'Allwetterreifen': 'Pneus toutes saisons',
+    'Ambiente-Beleuchtung': 'Éclairage d’ambiance',
+    'Anhängerkupplung abnehmbar': 'Attelage amovible',
+    'Anhängerkupplung fest': 'Attelage fixe',
+    'Anhängerkupplung-Vorbereitung': 'Préparation pour attelage',
+    'Armlehne': 'Accoudoir',
+    'Beheizbare Frontscheibe': 'Pare-brise chauffant',
+    'Beheizbares Lenkrad': 'Volant chauffant',
+    'Berganfahrassistent': 'Assistance au démarrage en côte',
+    'Bi-Xenon Scheinwerfer': 'Phares bi-xénon',
+    'Blendfreies Fernlicht': 'Feux de route anti-éblouissement',
+    'Bluetooth': 'Bluetooth',
+    'Bordcomputer': 'Ordinateur de bord',
+    'CD-Spieler': 'Lecteur CD',
+    'Dachreling': 'Barres de toit',
+    'ESP': 'ESP',
+    'Elektr. Fensterheber': 'Lève-vitres électriques',
+    'Elektr. Heckklappe': 'Hayon électrique',
+    'Elektr. Seitenspiegel': 'Rétroviseurs extérieurs électriques',
+    'Elektr. Sitzeinstellung': 'Réglage électrique des sièges',
+    'Elektr. Wegfahrsperre': 'Antidémarrage électronique',
+    'Fernlichtassistent': 'Assistant feux de route',
+    'Freisprecheinrichtung': 'Kit mains libres',
+    'Garantie': 'Garantie',
+    'Gepäckraumabtrennung': 'Séparation du compartiment à bagages',
+    'Geschwindigkeitsbegrenzer': 'Limiteur de vitesse',
+    'Innenspiegel autom. abblendend': 'Rétroviseur intérieur électrochrome',
+    'Isofix': 'Isofix',
+    'Isofix Beifahrersitz': 'Isofix siège passager',
+    'Kurvenlicht': 'Éclairage en virage',
+    'LED-Scheinwerfer': 'Phares LED',
+    'LED-Tagfahrlicht': 'Feux de jour LED',
+    'Lederlenkrad': 'Volant en cuir',
+    'Leichtmetallfelgen': 'Jantes en alliage léger',
+    'Lichtsensor': 'Capteur de lumière',
+    'Lordosenstütze': 'Support lombaire',
+    'Multi-CD-Wechsler': 'Changeur de CD',
+    'Multifunktionslenkrad': 'Volant multifonction',
+    'Musikstreaming integriert': 'Streaming musical intégré',
+    'Müdigkeitswarner': 'Détecteur de somnolence',
+    'Navigationssystem': 'Système de navigation',
+    'Nebelscheinwerfer': 'Phares antibrouillard',
+    'Nichtraucher-Fahrzeug': 'Véhicule non-fumeur',
+    'Notbremsassistent': 'Assistant de freinage d’urgence',
+    'Notrad': 'Roue de secours',
+    'Notrufsystem': 'Système d’appel d’urgence',
+    'Pannenkit': 'Kit de dépannage',
+    'Panorama-Dach': 'Toit panoramique',
+    'Partikelfilter': 'Filtre à particules',
+    'Radio DAB': 'Radio DAB',
+    'Raucherpaket': 'Pack fumeur',
+    'Regensensor': 'Capteur de pluie',
+    'Reifendruckkontrolle': 'Contrôle de la pression des pneus',
+    'Reserverad': 'Roue de secours',
+    'Schaltwippen': 'Palettes de changement de vitesse',
+    'Scheckheftgepflegt': 'Carnet d’entretien complet',
+    'Scheinwerferreinigung': 'Lave-phares',
+    'Schiebedach': 'Toit ouvrant',
+    'Schlüssellose Zentralverriegelung': 'Verrouillage centralisé sans clé',
+    'Servolenkung': 'Direction assistée',
+    'Sitzheizung': 'Sièges chauffants',
+    'Sitzheizung hinten': 'Sièges arrière chauffants',
+    'Skisack': 'Sac à skis',
+    'Sommerreifen': 'Pneus été',
+    'Soundsystem': 'Système audio',
+    'Sportfahrwerk': 'Châssis sport',
+    'Sportpaket': 'Pack sport',
+    'Sportsitze': 'Sièges sport',
+    'Sprachsteuerung': 'Commande vocale',
+    'Spurhalteassistent': 'Assistant de maintien de voie',
+    'Standheizung': 'Chauffage d’appoint',
+    'Start/Stopp-Automatik': 'Système Start/Stop automatique',
+    'TV': 'TV',
+    'Tagfahrlicht': 'Feux de jour',
+    'Tempomat': 'Régulateur de vitesse',
+    'Totwinkel-Assistent': 'Assistant d’angle mort',
+    'Touchscreen': 'Écran tactile',
+    'Traktionskontrolle': 'Contrôle de traction',
+    'Tuner/Radio': 'Radio',
+    'USB': 'USB',
+    'Verkehrszeichenerkennung': 'Reconnaissance des panneaux de signalisation',
+    'WLAN / Wifi Hotspot': 'Hotspot WLAN / Wifi',
+    'Winterpaket': 'Pack hiver',
+    'Winterreifen': 'Pneus hiver',
+    'Xenonscheinwerfer': 'Phares au xénon',
+    'Zentralverriegelung': 'Verrouillage centralisé',
+    'ABS': 'ABS'
+}
+
+# Filter feature_columns_translation to only include columns present in the DataFrame
+feature_columns_translation = {key: value for key, value in feature_columns_translation.items() if key in df.columns}
+
+# Calculate the number of attributes for each car
 df['Feature Count'] = df[feature_columns].sum(axis=1)
 
-# Calculate car distribution based on price range
+# Calculate the distribution of cars based on price range
 price_distribution = []
 for price_range in price_ranges:
     count = df[(df['Brutto Price'] >= price_range[0]) & (df['Brutto Price'] < price_range[1])].shape[0]
     price_distribution.append((price_range, count))
 
-# Calculate car distribution based on construction year
+# Calculate the distribution of cars based on construction year
 year_distribution = df['Year Bin'].value_counts().sort_index()
 
-# Calculate car distribution based on mileage
+# Calculate the distribution of cars based on mileage
 mileage_distribution = []
 for mileage_range in mileage_ranges:
     count = df[(df['Kilometerstand'] >= mileage_range[0]) & (df['Kilometerstand'] < mileage_range[1])].shape[0]
     mileage_distribution.append((mileage_range, count))
 
-# Sort the DataFrame to find the top 10 best cost-efficient fits
+
+# Sort the DataFrame to find the top 10 best economical matches
 df_sorted = df.sort_values(by=['Brutto Price', 'Kilometerstand', 'Erstzulassung', 'Feature Count'])
 best_fit_cars = df_sorted.head(10)
 
 # Generate the textual report
-report = "### Comparative Report of All Elements in the Preprocessed DataFrame\n\n"
+rapport = "### Rapport Comparatif de Tous les Éléments dans le DataFrame Prétraité\n\n"
 
 for index, row in df.iterrows():
-    report += f"#### Car {index + 1}\n"
-    report += f"- **Erstzulassung (First Registration Date)**: {row['Erstzulassung'].strftime('%m/%Y')}\n"
-    report += f"- **Brutto Price**: {row['Brutto Price']} EUR\n"
-    report += f"- **Kilometerstand (Mileage)**: {row['Kilometerstand']} km\n"
-    report += f"- **Farbe (Color)**: {row['Farbe']}\n"
-    report += f"- **Farbe (Hersteller) (Manufacturer Color Name)**: {row['Farbe (Hersteller)']}\n"
-    report += f"- **Feature Count**: {row['Feature Count']} attributes\n"
-    report += "---\n\n"
+    rapport += f"#### Voiture {index + 1}\n"
+    rapport += f"- **Date de Première Immatriculation**: {row['Erstzulassung'].strftime('%m/%Y')}\n"
+    rapport += f"- **Prix Brut**: {row['Brutto Price']} EUR\n"
+    rapport += f"- **URL : {row['URL']}\n"
+    rapport += f"- **Kilométrage**: {row['Kilometerstand']} km\n"
+    rapport += f"- **Couleur**: {row['Farbe']}\n"
+    rapport += f"- **Nom de la Couleur (Fabricant)**: {row['Farbe (Hersteller)']}\n"
+    rapport += f"- **Nombre d'Attributs**: {row['Feature Count']} options\n"
+    rapport += "---\n\n"
 
-report += f"We found {len(df)} cars satisfying your criteria.\n\n"
-
-report += "Car distribution"
-report += " depending on Price range\n\n"
+rapport += f"Nous avons trouvé {len(df)} voitures correspondant à vos critères.\n"
+rapport += "Distribution des voitures selon la gamme de prix\n\n"
 for price_range, count in price_distribution:
-    report += f"We found {count} cars from the Price range of {price_range[0]} to {price_range[1]} Euros.\n"
-report += "\n"
+    rapport += f"Nous avons trouvé {count} voitures dans la gamme de prix de {price_range[0]} à {price_range[1]} Euros.\n"
+rapport += "\n"
 
-report += "Car distribution depending on construction year\n\n"
+rapport += "Distribution des voitures selon l'année de construction\n\n"
 for interval, count in year_distribution.items():
-    report += f"We found {count} cars from the construction year range of {interval.left} to {interval.right - 1}.\n"
-report += "\n"
+    rapport += f"Nous avons trouvé {count} voitures dans la gamme d'années de construction de {interval.left} à {interval.right - 1}.\n"
+rapport += "\n"
 
-report += "Car distribution depending on Mileage\n\n"
+rapport += "Distribution des voitures selon le kilométrage\n\n"
 for mileage_range, count in mileage_distribution:
-    report += f"We found {count} cars from the mileage range of {mileage_range[0]} to {mileage_range[1]} km.\n"
-report += "\n"
+    rapport += f"Nous avons trouvé {count} voitures dans la gamme de kilométrage de {mileage_range[0]} à {mileage_range[1]} km.\n"
+rapport += "\n"
 
-# Find the best fit based on the lowest price, least mileage, latest construction year, and most number of options
-best_fit_car = df_sorted.iloc[0]
-report += f"The best cost-efficient fit with the least mileage, latest construction year, and most options is **Car {best_fit_car.name + 1}**:\n"
-report += f"- Listing Name: {best_fit_car['Car Title']}\n"
-report += f"- Mileage: {best_fit_car['Kilometerstand']} km\n"
-report += f"- Color: {best_fit_car['Farbe'] if pd.notnull(best_fit_car['Farbe']) else best_fit_car['Farbe (Hersteller)']}\n"
-report += f"- Price: {best_fit_car['Brutto Price']} EUR\n"
-report += f"- URL: {best_fit_car['URL']}\n"
-report += "- Features:\n"
+# Find the best match based on the lowest price, the least mileage, the latest construction year, and the highest number of options.
+meilleure_voiture = df_sorted.iloc[0]
+rapport += "\n"
+rapport += "##################################################################################################################\n"
+rapport += f"La meilleure correspondance économique avec le moindre kilométrage, l'année de construction la plus récente et le plus grand nombre d'options est **Voiture {meilleure_voiture.name + 1}** :\n"
+rapport += f"- Nom de l'Annonce : {meilleure_voiture['Car Title']}\n"
+rapport += f"- Kilométrage : {meilleure_voiture['Kilometerstand']} km\n"
+rapport += f"- Couleur : {meilleure_voiture['Farbe'] if pd.notnull(meilleure_voiture['Farbe']) else meilleure_voiture['Farbe (Hersteller)']}\n"
+rapport += f"- Prix : {meilleure_voiture['Brutto Price']} EUR\n"
+rapport += f"- URL : {meilleure_voiture['URL']}\n"
+rapport += "- Les options :\n"
 for feature in feature_columns:
-    if best_fit_car[feature] == 1:
-        report += f"  - {feature}\n"
-
-# List the top 10 best fits
-report += "\nTop 10 Best Fits:\n"
+    if feature in meilleure_voiture.index and meilleure_voiture[feature] == 1:
+        rapport += f"  - {feature_columns_translation[feature]}\n"
+rapport += "##################################################################################################################\n"
+# Loop through each row in the DataFrame to generate the report
+rapport += "\nLes 10 meilleures correspondances :\n"
 for i, car in best_fit_cars.iterrows():
-    report += f"{i+1}. Car {car.name + 1}:\n"
-    report += f"- Listing Name: {car['Car Title']}\n"
-    report += f"- Mileage: {car['Kilometerstand']} km\n"
-    report += f"- Color: {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe (Hersteller)']}\n"
-    report += f"- Price: {car['Brutto Price']} EUR\n"
-    report += f"- URL: {car['URL']}\n"
-    report += "- Features:\n"
+    rapport += f"{i+1}. Voiture {car.name + 1} :\n"
+    rapport += f"- Nom de l'Annonce : {car['Car Title']}\n"
+    rapport += f"- Kilométrage : {car['Kilometerstand']} km\n"
+    rapport += f"- Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe (Hersteller)']}\n"
+    rapport += f"- Prix : {car['Brutto Price']} EUR\n"
+    rapport += f"- URL : {car['URL']}\n"
+    rapport += "- Les options :\n"
     for feature in feature_columns:
-        if car[feature] == 1:
-            report += f"  - {feature}\n"
-    report += "\n"
+        if feature in car.index and car[feature] == 1:
+            rapport += f"  - {feature_columns_translation[feature]}\n"
+    rapport += "\n"
 
-print(report)
+#print(rapport)
+
+
+# Specify the path to wkhtmltopdf
+path_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # Adjust the path as necessary
+config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
+# Define the path to save the PDF file
+pdf_path = "car_report_Alexander.pdf"
+
+# Convert the rapport string directly to PDF
+pdfkit.from_string(rapport, pdf_path,  configuration=config)
+
+# Print a message to indicate that the PDF has been saved
+print(f"PDF saved successfully at {pdf_path}")

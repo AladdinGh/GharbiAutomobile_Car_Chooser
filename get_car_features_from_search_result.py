@@ -64,8 +64,8 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
         Result_df = pd.concat([URL_df, extracted_features_df], axis=1)
 
         # dump it for debugging
-        csv_file_path = 'output.csv'
-        Result_df.to_csv(csv_file_path, index=False)
+        # csv_file_path = 'output.csv'
+        # Result_df.to_csv(csv_file_path, index=False)
 
         # Write the DataFrame to an Excel file
         Result_df.to_excel(output_excel_file, index=False)
@@ -78,7 +78,7 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
         print(f"Error: {e}")
 
 # Example usage:
-html_file_path = 'SuchErgebnis.txt'
+html_file_path = 'SuchErgebnis_Alexander.txt'
 output_excel_file = 'search_list_car_features.xlsx'
 
 get_car_features_from_search_result(html_file_path, output_excel_file)

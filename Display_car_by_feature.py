@@ -100,5 +100,5 @@ def create_feature_selection_gui(preprocessed_df):
 if __name__ == "__main__":
     # Load your data into a pandas DataFrame
     # For demonstration purposes, let's create a sample DataFrame
-    preprocessed_df = pd.read_csv("preprocessed_df.csv")
+    preprocessed_df = pd.read_excel("preprocessed_df_Alexander_diesel.xlsx")
     create_feature_selection_gui(preprocessed_df)

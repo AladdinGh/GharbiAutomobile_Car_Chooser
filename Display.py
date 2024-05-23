@@ -20,7 +20,7 @@ def fill_missing_color(row):
 def plot_cars_by_month_and_year(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Extract month and year from the 'Erstzulassung' column
         df['Erstzulassung'] = pd.to_datetime(df['Erstzulassung']).dt.to_period('M')
@@ -102,7 +102,7 @@ def plot_cars_by_month_and_year(file_path):
 def plot_cars_by_price_category(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Fill missing colors
         df['Farbe'] = df.apply(fill_missing_color, axis=1)
@@ -187,7 +187,7 @@ def plot_cars_by_price_category(file_path):
 def plot_cars_by_kilometerstand(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Fill missing colors
         df['Farbe'] = df.apply(fill_missing_color, axis=1)
@@ -277,7 +277,7 @@ def plot_cars_by_kilometerstand(file_path):
 def plot_cars_by_Kraftstoffverbrauch(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Ensure 'Kraftstoffverbrauch' is a numerical column
         df['Kraftstoffverbrauch'] = pd.to_numeric(df['Kraftstoffverbrauch'], errors='coerce')
@@ -368,7 +368,7 @@ def plot_cars_by_Kraftstoffverbrauch(file_path):
 def plot_cars_by_farbe(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Fill missing colors
         df['Farbe'] = df.apply(fill_missing_color, axis=1)
@@ -443,7 +443,7 @@ def plot_cars_by_farbe(file_path):
 def plot_cars_by_hubraum(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Group by 'Hubraum' and count the number of cars
         car_count_by_hubraum = df['Hubraum'].value_counts().reset_index()
@@ -514,7 +514,7 @@ def plot_cars_by_hubraum(file_path):
 def plot_cars_by_PS(file_path):
     try:
         # Read the preprocessed DataFrame
-        df = pd.read_csv(file_path)
+        df = pd.read_excel(file_path)
 
         # Ensure 'PS' is a numerical column
         df['PS'] = pd.to_numeric(df['PS'], errors='coerce')
@@ -603,13 +603,13 @@ def plot_cars_by_PS(file_path):
 
 
 # Example usage:
-file_path = "preprocessed_df.csv"
+file_path = "preprocessed_df_Alexander_diesel.xlsx"
 #plot_cars_by_PS(file_path)
 #plot_cars_by_hubraum(file_path)
 #plot_cars_by_farbe(file_path)
 #plot_cars_by_Kraftstoffverbrauch(file_path)
-# plot_cars_by_price_category(file_path)
-plot_cars_by_month_and_year(file_path)
+plot_cars_by_price_category(file_path)
+#plot_cars_by_month_and_year(file_path)
 # plot_cars_by_kilometerstand(file_path)
 
 
