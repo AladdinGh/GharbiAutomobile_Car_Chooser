@@ -7,6 +7,9 @@ def preprocess_dataframe(file_path):
         # Read the Excel file
         df = pd.read_excel(file_path)
         
+        
+        df['Title'] = df['Car Title'].str.split().str[:3].str.join(' ')
+        
         ########################## Create a column for each equipment ########################
         # Split the 'Equipment' column by commas and expand it into multiple columns
         if 'Equipment' in df.columns:
@@ -57,28 +60,28 @@ def preprocess_dataframe(file_path):
             df['Kraftstoffverbrauch'] = np.nan
         
         ########################## Extract values from Energieverbrauch (komb.)2 ##################
-        def extract_energy_consumption(energy):
-            if isinstance(energy, str):
-                match = re.search(r'(\d{1,2},\d)\s*kWh/100km', energy)
-                if match:
-                    return float(match.group(1).replace(',', '.'))
-            return None
+        # def extract_energy_consumption(energy):
+        #     if isinstance(energy, str):
+        #         match = re.search(r'(\d{1,2},\d)\s*kWh/100km', energy)
+        #         if match:
+        #             return float(match.group(1).replace(',', '.'))
+        #     return None
         
         if 'Energieverbrauch (komb.)2' in df.columns:
-            df['Kraftstoffverbrauch'] = df['Kraftstoffverbrauch'].combine_first(df['Energieverbrauch (komb.)2'].apply(extract_energy_consumption))
+            df['Kraftstoffverbrauch'] = df['Kraftstoffverbrauch'].combine_first(df['Energieverbrauch (komb.)2'].apply(extract_first_consumption))
         
         ########################## Fill missing values in Kraftstoffverbrauch ##################
-        df['Kraftstoffverbrauch'].fillna(0, inplace=True)
+        #df['Kraftstoffverbrauch'].fillna(0, inplace=True)
         
         ########################## Rename and Delete Columns #############################
         df.drop(columns=['Energieverbrauch (komb.)2'], inplace=True, errors='ignore')
         
         ####################################################################################
         # Save the preprocessed DataFrame to Excel and CSV files
-        excel_file_path = 'preprocessed_df_Alexander_diesel.xlsx'
+        excel_file_path = 'processed_df_GLK.xlsx'
         df.to_excel(excel_file_path, index=False)
-        csv_file_path = 'preprocessed_df_Alexander_diesel.csv'
-        df.to_csv(csv_file_path, index=False)
+        # csv_file_path = 'preprocessed_df_Alexander_diesel.csv'
+        # df.to_csv(csv_file_path, index=False)
         
         return df
     except Exception as e:
@@ -86,7 +89,7 @@ def preprocess_dataframe(file_path):
         return None
 
 # Example usage
-file_path = "search_list_car_features_Alexander_diesel.xlsx"  # Replace with your file path
+file_path = "search_list_car_features_GLK.xlsx"  # Replace with your file path
 df = preprocess_dataframe(file_path)
 
 if df is not None:

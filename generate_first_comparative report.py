@@ -2,7 +2,7 @@ import pandas as pd
 
 
 # Read preprocessed data
-file_path = "preprocessed_df_Alexander_diesel.xlsx"
+file_path = "translated_preprocessed_df.xlsx"
 df = pd.read_excel(file_path)
 
 # Convert 'Erstzulassung' to datetime format
@@ -158,20 +158,23 @@ feature_columns_translation = {key: value for key, value in feature_columns_tran
 # Calculate the number of attributes for each car
 df['Feature Count'] = df[feature_columns].sum(axis=1)
 
-# Calculate the distribution of cars based on price range
-price_distribution = []
-for price_range in price_ranges:
-    count = df[(df['Brutto Price'] >= price_range[0]) & (df['Brutto Price'] < price_range[1])].shape[0]
-    price_distribution.append((price_range, count))
+# # Calculate the distribution of cars based on price range
+# price_distribution = []
+# for price_range in price_ranges:
+#     count = df[(df['Brutto Price'] >= price_range[0]) & (df['Brutto Price'] < price_range[1])].shape[0]
+#     filtered_cars = df[(df['Brutto Price'] >= price_range[0]) & (df['Brutto Price'] < price_range[1])]
+#     price_distribution.append((price_range, count, filtered_cars))
+    
 
-# Calculate the distribution of cars based on construction year
-year_distribution = df['Year Bin'].value_counts().sort_index()
 
-# Calculate the distribution of cars based on mileage
-mileage_distribution = []
-for mileage_range in mileage_ranges:
-    count = df[(df['Kilometerstand'] >= mileage_range[0]) & (df['Kilometerstand'] < mileage_range[1])].shape[0]
-    mileage_distribution.append((mileage_range, count))
+# # Calculate the distribution of cars based on construction year
+# year_distribution = df['Year Bin'].value_counts().sort_index()
+
+# # Calculate the distribution of cars based on mileage
+# mileage_distribution = []
+# for mileage_range in mileage_ranges:
+#     count = df[(df['Kilometerstand'] >= mileage_range[0]) & (df['Kilometerstand'] < mileage_range[1])].shape[0]
+#     mileage_distribution.append((mileage_range, count))
 
 
 # Sort the DataFrame to find the top 10 best economical matches
@@ -181,32 +184,36 @@ best_fit_cars = df_sorted.head(10)
 # Generate the textual report
 rapport = "### Rapport Comparatif de Tous les Éléments dans le DataFrame Prétraité\n\n"
 
-for index, row in df.iterrows():
-    rapport += f"#### Voiture {index + 1}\n"
-    rapport += f"- **Date de Première Immatriculation**: {row['Erstzulassung'].strftime('%m/%Y')}\n"
-    rapport += f"- **Prix Brut**: {row['Brutto Price']} EUR\n"
-    rapport += f"- **URL : {row['URL']}\n"
-    rapport += f"- **Kilométrage**: {row['Kilometerstand']} km\n"
-    rapport += f"- **Couleur**: {row['Farbe']}\n"
-    rapport += f"- **Nom de la Couleur (Fabricant)**: {row['Farbe (Hersteller)']}\n"
-    rapport += f"- **Nombre d'Attributs**: {row['Feature Count']} options\n"
-    rapport += "---\n\n"
+# for index, row in df.iterrows():
+#     rapport += f"#### Voiture {index + 1}\n"
+#     rapport += f"- **Date de Première Immatriculation**: {row['Erstzulassung'].strftime('%m/%Y')}\n"
+#     rapport += f"- **Prix Brut**: {row['Brutto Price']} EUR\n"
+#     rapport += f"- **URL : {row['URL']}\n"
+#     rapport += f"- **Kilométrage**: {row['Kilometerstand']} km\n"
+#     rapport += f"- **Couleur**: {row['Farbe']}\n"
+#     rapport += f"- **Nom de la Couleur (Fabricant)**: {row['Farbe (Hersteller)']}\n"
+#     rapport += f"- **Nombre d'Attributs**: {row['Feature Count']} options\n"
+#     rapport += "---\n\n"
 
 rapport += f"Nous avons trouvé {len(df)} voitures correspondant à vos critères.\n"
-rapport += "Distribution des voitures selon la gamme de prix\n\n"
-for price_range, count in price_distribution:
-    rapport += f"Nous avons trouvé {count} voitures dans la gamme de prix de {price_range[0]} à {price_range[1]} Euros.\n"
-rapport += "\n"
+# rapport += "Distribution des voitures selon la gamme de prix\n\n"
 
-rapport += "Distribution des voitures selon l'année de construction\n\n"
-for interval, count in year_distribution.items():
-    rapport += f"Nous avons trouvé {count} voitures dans la gamme d'années de construction de {interval.left} à {interval.right - 1}.\n"
-rapport += "\n"
+# for price_range, count, filtered_cars in price_distribution:
+#     rapport += f"Nous avons trouvé {count} voitures dans la gamme de prix de {price_range[0]} à {price_range[1]} Euros.\n"
+#     # for index, row in filtered_cars.iterrows():
+#     #     rapport += f"- **Voiture {index + 1}**: {row['URL'][:10]})\n"
+# rapport += "\n"
 
-rapport += "Distribution des voitures selon le kilométrage\n\n"
-for mileage_range, count in mileage_distribution:
-    rapport += f"Nous avons trouvé {count} voitures dans la gamme de kilométrage de {mileage_range[0]} à {mileage_range[1]} km.\n"
-rapport += "\n"
+
+# rapport += "Distribution des voitures selon l'année de construction\n\n"
+# for interval, count in year_distribution.items():
+#     rapport += f"Nous avons trouvé {count} voitures dans la gamme d'années de construction de {interval.left} à {interval.right - 1}.\n"
+# rapport += "\n"
+
+# rapport += "Distribution des voitures selon le kilométrage\n\n"
+# for mileage_range, count in mileage_distribution:
+#     rapport += f"Nous avons trouvé {count} voitures dans la gamme de kilométrage de {mileage_range[0]} à {mileage_range[1]} km.\n"
+# rapport += "\n"
 
 # Find the best match based on the lowest price, the least mileage, the latest construction year, and the highest number of options.
 meilleure_voiture = df_sorted.iloc[0]
