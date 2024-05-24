@@ -1,5 +1,5 @@
 import pandas as pd
-import pdfkit
+
 
 # Read preprocessed data
 file_path = "preprocessed_df_Alexander_diesel.xlsx"
@@ -226,7 +226,7 @@ rapport += "####################################################################
 # Loop through each row in the DataFrame to generate the report
 rapport += "\nLes 10 meilleures correspondances :\n"
 for i, car in best_fit_cars.iterrows():
-    rapport += f"{i+1}. Voiture {car.name + 1} :\n"
+    rapport += f"Voiture {car.name + 1} :\n"
     rapport += f"- Nom de l'Annonce : {car['Car Title']}\n"
     rapport += f"- Kilométrage : {car['Kilometerstand']} km\n"
     rapport += f"- Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe (Hersteller)']}\n"
@@ -238,17 +238,9 @@ for i, car in best_fit_cars.iterrows():
             rapport += f"  - {feature_columns_translation[feature]}\n"
     rapport += "\n"
 
-#print(rapport)
+print(rapport)
+# Save the report to a text file
+with open("car_report_Alexander.txt", "w") as txt_file:
+    txt_file.write(rapport)
 
-
-# Specify the path to wkhtmltopdf
-path_wkhtmltopdf = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # Adjust the path as necessary
-config = pdfkit.configuration(wkhtmltopdf=path_wkhtmltopdf)
-# Define the path to save the PDF file
-pdf_path = "car_report_Alexander.pdf"
-
-# Convert the rapport string directly to PDF
-pdfkit.from_string(rapport, pdf_path,  configuration=config)
-
-# Print a message to indicate that the PDF has been saved
-print(f"PDF saved successfully at {pdf_path}")
+print("Text file saved")
