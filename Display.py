@@ -65,7 +65,7 @@ def plot_cars_by_month_and_year(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 month_index = int(event.xdata)  # Get the index of the clicked point
                 year, month = months_years[month_index]
-                selected_cars = df[(df['Year'] == year) & (df['Month'] == month)][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+                selected_cars = df[(df['Year'] == year) & (df['Month'] == month)][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -150,7 +150,7 @@ def plot_cars_by_price_category(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 price_index = int(event.xdata)  # Get the index of the clicked point
                 selected_price_category = price_labels[price_index]
-                selected_cars = df[df['Price Category'] == selected_price_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+                selected_cars = df[df['Price Category'] == selected_price_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -237,7 +237,7 @@ def plot_cars_by_kilometerstand(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 km_index = int(event.xdata)  # Get the index of the clicked point
                 selected_km_category = km_categories[km_index]
-                selected_cars = df[df['Kilometerstand Category'] == selected_km_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+                selected_cars = df[df['Kilometerstand Category'] == selected_km_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -328,7 +328,7 @@ def plot_cars_by_Kraftstoffverbrauch(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 fuel_index = int(event.xdata)  # Get the index of the clicked point
                 selected_fuel_category = fuel_labels[fuel_index]
-                selected_cars = df[df['Fuel Consumption Category'] == selected_fuel_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)', 'Kraftstoffverbrauch']]
+                selected_cars = df[df['Fuel Consumption Category'] == selected_fuel_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Kraftstoffverbrauch']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe'], row['Kraftstoffverbrauch']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -405,7 +405,7 @@ def plot_cars_by_farbe(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 color_index = int(event.xdata)  # Get the index of the clicked point
                 selected_color = car_count_by_farbe.loc[color_index, 'Farbe']
-                selected_cars = df[df['Farbe'] == selected_color][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+                selected_cars = df[df['Farbe'] == selected_color][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -477,7 +477,7 @@ def plot_cars_by_hubraum(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 hubraum_index = int(event.xdata)  # Get the index of the clicked point
                 selected_hubraum = car_count_by_hubraum.loc[hubraum_index, 'Hubraum']
-                selected_cars = df[df['Hubraum'] == selected_hubraum][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)']]
+                selected_cars = df[df['Hubraum'] == selected_hubraum][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -567,7 +567,7 @@ def plot_cars_by_PS(file_path):
             if event.button == 1:  # Check if left mouse button clicked
                 ps_index = int(event.xdata)  # Get the index of the clicked point
                 selected_ps_category = ps_labels[ps_index]
-                selected_cars = df[df['PS Category'] == selected_ps_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'Farbe (Hersteller)', 'PS']]
+                selected_cars = df[df['PS Category'] == selected_ps_category][['URL', 'Brutto Price', 'Kilometerstand', 'Farbe', 'PS']]
                 urls_and_features = selected_cars.apply(lambda row: [row['URL'], row['Brutto Price'], row['Kilometerstand'], row['Farbe'], row['PS']], axis=1)
                 urls_and_features_list = urls_and_features.values.tolist()
                 if urls_and_features_list:
@@ -603,13 +603,13 @@ def plot_cars_by_PS(file_path):
 
 
 # Example usage:
-file_path = "preprocessed_df_Alexander_diesel.xlsx"
+file_path = "translated_preprocessed_df.xlsx"
 #plot_cars_by_PS(file_path)
 #plot_cars_by_hubraum(file_path)
 #plot_cars_by_farbe(file_path)
 #plot_cars_by_Kraftstoffverbrauch(file_path)
-plot_cars_by_price_category(file_path)
-#plot_cars_by_month_and_year(file_path)
+#plot_cars_by_price_category(file_path)
+plot_cars_by_month_and_year(file_path)
 # plot_cars_by_kilometerstand(file_path)
 
 
