@@ -2,12 +2,100 @@ import logging
 import pandas as pd
 import re
 from docx import Document
+from docx.shared import Pt
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
+import docx
+
+
+# Import custom modules
 from Preporocess_car_feature_dataframe import preprocess_search_list
 from Translate_preprocessed_data_frame import translate_preprocessed_search_result
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
+
+def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
+    """
+    Add a hyperlink to a paragraph.
+
+    Args:
+        paragraph (docx.text.paragraph.Paragraph): The paragraph to add the hyperlink to.
+        url (str): The URL for the hyperlink.
+        text (str): The display text for the hyperlink.
+        color (str): The color of the hyperlink text.
+        underline (bool): Whether the hyperlink text should be underlined.
+    """
+    # This gets access to the document.xml.rels file and gets a new relation id value
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+
+    # Create the w:hyperlink tag and add needed values
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    # Create a w:r element and a new w:rPr element
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    # Add color if specified
+    if color:
+        c = OxmlElement('w:color')
+        c.set(qn('w:val'), color)
+        rPr.append(c)
+
+    # Add underline if specified
+    if underline:
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    # Join all the xml elements together add add the required text to the w:r element
+    new_run.append(rPr)
+    new_run.text = text
+    hyperlink.append(new_run)
+
+    # Append the hyperlink to the paragraph
+    paragraph._p.append(hyperlink)
+
+def add_features_table(doc, car, features):
+    """
+    Add a table with car features to the Word document.
+
+    Args:
+        doc (Document): The Word document object.
+        car (Series): A pandas Series representing a car.
+        features (list): List of feature names.
+    """
+    num_columns = 4  # Number of columns per row in the table
+    table = doc.add_table(rows=1, cols=num_columns)
+    table.style = 'Table Grid'
+
+    row_cells = table.rows[0].cells
+    col_idx = 0
+
+    for feature in features:
+        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in car.index and car[feature] == 1:
+            row_cells[col_idx].text = feature
+            col_idx += 1
+            if col_idx == num_columns:
+                row_cells = table.add_row().cells
+                col_idx = 0
+
+    # Add borders to the table cells
+    for row in table.rows:
+        for cell in row.cells:
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.size = Pt(9)
+
+            tc_borders = OxmlElement('w:tcBorders')
+            for key in ('left', 'right', 'top', 'bottom'):
+                new_border = OxmlElement(f'w:{key}')
+                new_border.set(qn('w:val'), 'single')
+                tc_borders.append(new_border)
+            cell._element.get_or_add_tcPr().append(tc_borders)
 
 def print_report(file_path):
     try:
@@ -22,67 +110,45 @@ def print_report(file_path):
         doc = Document()
 
         # Generate the textual report
-        doc.add_heading('Rapport Comparatif de Tous les Éléments dans le DataFrame Prétraité', level=1)
+        doc.add_heading('Rapport Comparatif des voitures sur www.mobile.de', level=1)
         doc.add_paragraph(f"Nous avons trouvé {len(df)} voitures correspondant à vos critères.")
-        doc.add_paragraph("##################################################################################################################")
-        # # Find the best match based on the lowest price, the least mileage, the latest construction year, and the highest number of options.
-        # meilleure_voiture = df_sorted.iloc[0]
-        # doc.add_paragraph("\n")
-        # doc.add_paragraph("##################################################################################################################")
-        # doc.add_paragraph(f"La meilleure correspondance économique avec le moindre kilométrage, l'année de construction la plus récente et le plus grand nombre d'options est Voiture {meilleure_voiture.name + 1} :")
-        # doc.add_paragraph(f"Nom de l'Annonce : {meilleure_voiture['Car Title']}")
-        # doc.add_paragraph(f"Kilométrage : {meilleure_voiture['Kilometerstand']} km")
-        # doc.add_paragraph(f"Date de mise en circulation : {meilleure_voiture['Erstzulassung']} km\n")
-        # doc.add_paragraph(f"Couleur : {meilleure_voiture['Farbe'] if pd.notnull(meilleure_voiture['Farbe']) else meilleure_voiture['Farbe(constructeur)']}")
-        # doc.add_paragraph(f"Prix : {meilleure_voiture['Brutto Price']} EUR")
-        # doc.add_paragraph(f"URL : {meilleure_voiture['URL']}")
-        # doc.add_paragraph("Les options :")
-        # for feature in df.columns:
-        #     if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in meilleure_voiture.index and meilleure_voiture[feature] == 1:
-        #         doc.add_paragraph(f"  - {feature}")
-        # doc.add_paragraph("Description :")
-        # # Format description into paragraphs
-        # description = meilleure_voiture['Description']
-        # paragraphs = re.split(r'[\n.]', description)
-        # for paragraph in paragraphs:
-        #     doc.add_paragraph(f" {paragraph.strip()}")
-        # doc.add_paragraph("##################################################################################################################")
-        
-        # Loop through each row in the DataFrame to generate the report for top 10 matches
         doc.add_paragraph("\nLes 10 meilleures correspondances :")
+        
         for i, car in best_fit_cars.iterrows():
-            #doc.add_paragraph(f"Voiture {i} :")
-            doc.add_paragraph(f"Nom de l'Annonce : {car['Car Title']}")
+            doc.add_paragraph(f"\n{car['Car Title']}", style='Title')
+            doc.add_paragraph(f"Score : {car['Score']:.2f}")
             doc.add_paragraph(f"Kilométrage : {car['Kilometerstand']} km")
-            doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']} km")
+            doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']}")
             doc.add_paragraph(f"Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe(constructeur)']}")
             doc.add_paragraph(f"Prix : {car['Brutto Price']} EUR")
-            doc.add_paragraph(f"URL : {car['URL']}")
+            
+            # Add clickable URL
+            p = doc.add_paragraph("URL : ")
+            add_hyperlink(p, car['Short_URL'], car['Short_URL'])
+
             doc.add_paragraph("Les options :")
-            for feature in df.columns:
-                if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in car.index and car[feature] == 1:
-                    doc.add_paragraph(f"  - {feature}")
+            add_features_table(doc, car, df.columns)
             doc.add_paragraph("Description :")
+            
             # Format description into paragraphs
             description = car['Description']
             paragraphs = re.split(r'[\n.]', description)
             for paragraph in paragraphs:
                 doc.add_paragraph(f" {paragraph.strip()}")
-            doc.add_paragraph("##################################################################################################################")
-            
+
         # Save the report to a Word document
-        doc.save("car_report_Example.docx")
-        logging.info("Report saved as 'car_report_Example.docx'")
+        doc.save("Rapport comparatif.docx")
+        logging.info("Report saved as 'Rapport comparatif.docx'")
     except Exception as e:
         logging.error(f"Error in print_report: {e}")
 
 def prepare_and_print_report():
     try:
-        # file_path = "search_list_car_features_Alexander_diesel.xlsx" 
-        # preprocess_search_list(file_path)
+        file_path = "search_list_car_features_Alexander_diesel.xlsx" 
+        preprocess_search_list(file_path)
         
-        # file_path = "preprocessed_search_result.xlsx"
-        # translate_preprocessed_search_result(file_path)
+        file_path = "preprocessed_search_result.xlsx"
+        translate_preprocessed_search_result(file_path)
         
         file_path = "translated_preprocessed_df.xlsx"
         print_report(file_path)

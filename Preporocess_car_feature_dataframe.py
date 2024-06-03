@@ -3,6 +3,8 @@ import re
 import numpy as np
 import logging
 from datetime import datetime
+import requests 
+
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.ERROR, 
@@ -12,6 +14,9 @@ def preprocess_dataframe(file_path):
     try:
         # Read the Excel file
         df = pd.read_excel(file_path)
+        
+        #shorten the URL
+        df['Short_URL'] = df['URL'].apply(shorten_url)
         
         # Create a Title column with the first three words of the Car Title
         df['Title'] = df['Car Title'].str.split().str[:3].str.join(' ')
@@ -116,13 +121,29 @@ def normalize(series, invert=False):
     except Exception as e:
         logging.error(f"Error in normalize: {e}")
         return series
-
+    
+    
+def shorten_url(long_url):
+    try:
+        response = requests.get(f'http://tinyurl.com/api-create.php?url={long_url}')
+        if response.status_code == 200:
+            return response.text
+        else:
+            # Handle error response
+            print(f"Error: {response.status_code}, {response.text}")
+            return None
+    except Exception as e:
+        # Handle exceptions
+        print(f"Exception occurred: {e}")
+        return None
+    
+    
 def assign_scores(processed_df):
     try:
         # Weights for scoring
         weights = {
-            'Brutto Price': 0.5,
-            'Erstzulassung_years': 0.5,
+            'Brutto Price': 1.0,
+            'Erstzulassung_years': 0.0,
         }
         
         # Normalize columns
@@ -161,6 +182,6 @@ def preprocess_search_list(file_path):
         logging.error(f"Error in preprocess_search_list: {e}")
         return None
 
-# # # Call the preprocess_search_list function
-file_path = "search_list_car_features_GLK.xlsx" 
-preprocess_search_list(file_path)
+# Call the preprocess_search_list function
+# file_path = "search_list_car_features_GLK.xlsx" 
+# preprocess_search_list(file_path)
