@@ -1,20 +1,29 @@
-from googletrans import Translator
+import logging
 import pandas as pd
+from googletrans import Translator
 import spacy
 from tqdm import tqdm
+
+# Setup logging configuration
+logging.basicConfig(filename='processing.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load the French language model for spaCy
 nlp = spacy.load("fr_core_news_sm")
 
 # Function to correct spelling mistakes in French text
 def correct_spelling(text):
-    # Process the text with spaCy
-    doc = nlp(text)
-    
-    # Correct spelling mistakes
-    corrected_text = ' '.join(token.text for token in doc)
-    
-    return corrected_text
+    try:
+        # Process the text with spaCy
+        doc = nlp(text)
+        
+        # Correct spelling mistakes
+        corrected_text = ' '.join(token.text for token in doc)
+        
+        return corrected_text
+    except Exception as e:
+        logging.error(f"Error in correct_spelling: {e}")
+        return text
 
 # Initialize the Translator
 translator = Translator()
@@ -25,7 +34,7 @@ def translate_text(text):
         translation = translator.translate(text, src='de', dest='fr').text
         return translation
     except Exception as e:
-        print("Error occurred during translation:", e)
+        logging.error(f"Error occurred during translation: {e}")
         return text  # Return original text if translation fails
 
 # Function to translate values in selected columns
@@ -39,128 +48,139 @@ def translate_column_values(preprocessed_df, column):
             translated_values.append(corrected_text)
         return translated_values
     except Exception as e:
-        print(f"Error occurred during translation of column {column}:", e)
+        logging.error(f"Error occurred during translation of column {column}: {e}")
         return preprocessed_df[column]  # Return original values if translation fails
 
-def translate_df(file_path, index=False):   
-    # Load dataframe from Excel file
-    preprocessed_df = pd.read_excel(file_path)
-    
-    # Define the columns to be translated
-    columns_to_translate = ['Farbe', 'Description']
-    
-    # Translate values in selected columns
-    preprocessed_df['Description'] = preprocessed_df['Description'].astype(str)
-    for col in columns_to_translate:
-        preprocessed_df[col] = translate_column_values(preprocessed_df, col)
-    
-    preprocessed_df.rename(columns={'Getriebe': 'Boite_vitesse', 'Kraftstoffart': 'carburant', 'Fahrzeugzustand': 'Etat_voiture'
-                       , 'Kategorie': 'categorie', 'Klimatisierung': 'climatisation'
-                       , 'Einparkhilfe': 'Aide_parking'
-                       , 'Innenausstattung': 'Options', 'Kraftstoffverbrauch': 'Consommation'}, inplace=True)
+def translate_df(file_path):   
+    try:
+        # Load dataframe from Excel file
+        preprocessed_df = pd.read_excel(file_path)
+        
+        # Define the columns to be translated
+        columns_to_translate = ['Farbe', 'Description']
+        
+        # Translate values in selected columns
+        preprocessed_df['Description'] = preprocessed_df['Description'].astype(str)
+        for col in columns_to_translate:
+            preprocessed_df[col] = translate_column_values(preprocessed_df, col)
+        
+        preprocessed_df.rename(columns={'Getriebe': 'Boite_vitesse', 'Kraftstoffart': 'carburant', 'Fahrzeugzustand': 'Etat_voiture'
+                           , 'Kategorie': 'categorie', 'Klimatisierung': 'climatisation'
+                           , 'Einparkhilfe': 'Aide_parking'
+                           , 'Innenausstattung': 'Options', 'Kraftstoffverbrauch': 'Consommation'}, inplace=True)
 
-    # Translation dictionary
-    preprocessed_df.rename(columns={
-        'Abstandstempomat': 'Régulateur de distance',
-        'Abstandswarner': 'Avertisseur de distance',
-        'Adaptives Kurvenlicht': 'Éclairage adaptatif en virage',
-        'Alarmanlage': 'Alarme',
-        'Allradantrieb': 'Transmission intégrale',
-        'Allwetterreifen': 'Pneus toutes saisons',
-        'Ambiente-Beleuchtung': 'Éclairage d’ambiance',
-        'Anhängerkupplung abnehmbar': 'Attelage amovible',
-        'Anhängerkupplung fest': 'Attelage fixe',
-        'Anhängerkupplung-Vorbereitung': 'Préparation pour attelage',
-        'Armlehne': 'Accoudoir',
-        'Beheizbare Frontscheibe': 'Pare-brise chauffant',
-        'Beheizbares Lenkrad': 'Volant chauffant',
-        'Berganfahrassistent': 'Assistance au démarrage en côte',
-        'Bi-Xenon Scheinwerfer': 'Phares bi-xénon',
-        'Blendfreies Fernlicht': 'Feux de route anti-éblouissement',
-        'Bluetooth': 'Bluetooth',
-        'Bordcomputer': 'Ordinateur de bord',
-        'CD-Spieler': 'Lecteur CD',
-        'Dachreling': 'Barres de toit',
-        'ESP': 'ESP',
-        'Elektr. Fensterheber': 'Lève-vitres électriques',
-        'Elektr. Heckklappe': 'Hayon électrique',
-        'Elektr. Seitenspiegel': 'Rétroviseurs extérieurs électriques',
-        'Elektr. Sitzeinstellung': 'Réglage électrique des sièges',
-        'Elektr. Wegfahrsperre': 'Antidémarrage électronique',
-        'Fernlichtassistent': 'Assistant feux de route',
-        'Freisprecheinrichtung': 'Kit mains libres',
-        'Garantie': 'Garantie',
-        'Gepäckraumabtrennung': 'Séparation du compartiment à bagages',
-        'Geschwindigkeitsbegrenzer': 'Limiteur de vitesse',
-        'Innenspiegel autom. abblendend': 'Rétroviseur intérieur électrochrome',
-        'Isofix': 'Isofix',
-        'Isofix Beifahrersitz': 'Isofix siège passager',
-        'Kurvenlicht': 'Éclairage en virage',
-        'LED-Scheinwerfer': 'Phares LED',
-        'LED-Tagfahrlicht': 'Feux de jour LED',
-        'Lederlenkrad': 'Volant en cuir',
-        'Leichtmetallfelgen': 'Jantes en alliage léger',
-        'Lichtsensor': 'Capteur de lumière',
-        'Lordosenstütze': 'Support lombaire',
-        'Multi-CD-Wechsler': 'Changeur de CD',
-        'Multifunktionslenkrad': 'Volant multifonction',
-        'Musikstreaming integriert': 'Streaming musical intégré',
-        'Müdigkeitswarner': 'Détecteur de somnolence',
-        'Navigationssystem': 'Système de navigation',
-        'Nebelscheinwerfer': 'Phares antibrouillard',
-        'Nichtraucher-Fahrzeug': 'Véhicule non-fumeur',
-        'Notbremsassistent': 'Assistant de freinage d’urgence',
-        'Notrad': 'Roue de secours',
-        'Notrufsystem': 'Système d’appel d’urgence',
-        'Pannenkit': 'Kit de dépannage',
-        'Panorama-Dach': 'Toit panoramique',
-        'Partikelfilter': 'Filtre à particules',
-        'Radio DAB': 'Radio DAB',
-        'Raucherpaket': 'Pack fumeur',
-        'Regensensor': 'Capteur de pluie',
-        'Reifendruckkontrolle': 'Contrôle de la pression des pneus',
-        'Reserverad': 'Roue de secours',
-        'Schaltwippen': 'Palettes de changement de vitesse',
-        'Scheckheftgepflegt': 'Carnet d’entretien complet',
-        'Scheinwerferreinigung': 'Lave-phares',
-        'Schiebedach': 'Toit ouvrant',
-        'Schlüssellose Zentralverriegelung': 'Verrouillage centralisé sans clé',
-        'Servolenkung': 'Direction assistée',
-        'Sitzheizung': 'Sièges chauffants',
-        'Sitzheizung hinten': 'Sièges arrière chauffants',
-        'Skisack': 'Sac à skis',
-        'Sommerreifen': 'Pneus été',
-        'Soundsystem': 'Système audio',
-        'Sportfahrwerk': 'Châssis sport',
-        'Sportpaket': 'Pack sport',
-        'Sportsitze': 'Sièges sport',
-        'Sprachsteuerung': 'Commande vocale',
-        'Spurhalteassistent': 'Assistant de maintien de voie',
-        'Standheizung': 'Chauffage d’appoint',
-        'Start/Stopp-Automatik': 'Système Start/Stop automatique',
-        'TV': 'TV',
-        'Tagfahrlicht': 'Feux de jour',
-        'Tempomat': 'Régulateur de vitesse',
-        'Totwinkel-Assistent': 'Assistant d’angle mort',
-        'Touchscreen': 'Écran tactile',
-        'Traktionskontrolle': 'Contrôle de traction',
-        'Tuner/Radio': 'Radio',
-        'USB': 'USB',
-        'Verkehrszeichenerkennung': 'Reconnaissance des panneaux de signalisation',
-        'WLAN / Wifi Hotspot': 'Hotspot WLAN / Wifi',
-        'Winterpaket': 'Pack hiver',
-        'Winterreifen': 'Pneus hiver',
-        'Xenonscheinwerfer': 'Phares au xénon',
-        'Zentralverriegelung': 'Verrouillage centralisé',
-        'ABS': 'ABS'
-        }, inplace=True)
+        # Translation dictionary
+        preprocessed_df.rename(columns={
+            'Abstandstempomat': 'Régulateur de distance',
+            'Abstandswarner': 'Avertisseur de distance',
+            'Adaptives Kurvenlicht': 'Éclairage adaptatif en virage',
+            'Alarmanlage': 'Alarme',
+            'Allradantrieb': 'Transmission intégrale',
+            'Allwetterreifen': 'Pneus toutes saisons',
+            'Ambiente-Beleuchtung': 'Éclairage d’ambiance',
+            'Anhängerkupplung abnehmbar': 'Attelage amovible',
+            'Anhängerkupplung fest': 'Attelage fixe',
+            'Anhängerkupplung-Vorbereitung': 'Préparation pour attelage',
+            'Armlehne': 'Accoudoir',
+            'Beheizbare Frontscheibe': 'Pare-brise chauffant',
+            'Beheizbares Lenkrad': 'Volant chauffant',
+            'Berganfahrassistent': 'Assistance au démarrage en côte',
+            'Bi-Xenon Scheinwerfer': 'Phares bi-xénon',
+            'Blendfreies Fernlicht': 'Feux de route anti-éblouissement',
+            'Bluetooth': 'Bluetooth',
+            'Bordcomputer': 'Ordinateur de bord',
+            'CD-Spieler': 'Lecteur CD',
+            'Dachreling': 'Barres de toit',
+            'ESP': 'ESP',
+            'Elektr. Fensterheber': 'Lève-vitres électriques',
+            'Elektr. Heckklappe': 'Hayon électrique',
+            'Elektr. Seitenspiegel': 'Rétroviseurs extérieurs électriques',
+            'Elektr. Sitzeinstellung': 'Réglage électrique des sièges',
+            'Elektr. Wegfahrsperre': 'Antidémarrage électronique',
+            'Fernlichtassistent': 'Assistant feux de route',
+            'Freisprecheinrichtung': 'Kit mains libres',
+            'Garantie': 'Garantie',
+            'Gepäckraumabtrennung': 'Séparation du compartiment à bagages',
+            'Geschwindigkeitsbegrenzer': 'Limiteur de vitesse',
+            'Innenspiegel autom. abblendend': 'Rétroviseur intérieur électrochrome',
+            'Isofix': 'Isofix',
+            'Isofix Beifahrersitz': 'Isofix siège passager',
+            'Kurvenlicht': 'Éclairage en virage',
+            'LED-Scheinwerfer': 'Phares LED',
+            'LED-Tagfahrlicht': 'Feux de jour LED',
+            'Lederlenkrad': 'Volant en cuir',
+            'Leichtmetallfelgen': 'Jantes en alliage léger',
+            'Lichtsensor': 'Capteur de lumière',
+            'Lordosenstütze': 'Support lombaire',
+            'Multi-CD-Wechsler': 'Changeur de CD',
+            'Multifunktionslenkrad': 'Volant multifonction',
+            'Musikstreaming integriert': 'Streaming musical intégré',
+            'Müdigkeitswarner': 'Détecteur de somnolence',
+            'Navigationssystem': 'Système de navigation',
+            'Nebelscheinwerfer': 'Phares antibrouillard',
+            'Nichtraucher-Fahrzeug': 'Véhicule non-fumeur',
+            'Notbremsassistent': 'Assistant de freinage d’urgence',
+            'Notrad': 'Roue de secours',
+            'Notrufsystem': 'Système d’appel d’urgence',
+            'Pannenkit': 'Kit de dépannage',
+            'Panorama-Dach': 'Toit panoramique',
+            'Partikelfilter': 'Filtre à particules',
+            'Radio DAB': 'Radio DAB',
+            'Raucherpaket': 'Pack fumeur',
+            'Regensensor': 'Capteur de pluie',
+            'Reifendruckkontrolle': 'Contrôle de la pression des pneus',
+            'Reserverad': 'Roue de secours',
+            'Schaltwippen': 'Palettes de changement de vitesse',
+            'Scheckheftgepflegt': 'Carnet d’entretien complet',
+            'Scheinwerferreinigung': 'Lave-phares',
+            'Schiebedach': 'Toit ouvrant',
+            'Schlüssellose Zentralverriegelung': 'Verrouillage centralisé sans clé',
+            'Servolenkung': 'Direction assistée',
+            'Sitzheizung': 'Sièges chauffants',
+            'Sitzheizung hinten': 'Sièges arrière chauffants',
+            'Skisack': 'Sac à skis',
+            'Sommerreifen': 'Pneus été',
+            'Soundsystem': 'Système audio',
+            'Sportfahrwerk': 'Châssis sport',
+            'Sportpaket': 'Pack sport',
+            'Sportsitze': 'Sièges sport',
+            'Sprachsteuerung': 'Commande vocale',
+            'Spurhalteassistent': 'Assistant de maintien de voie',
+            'Standheizung': 'Chauffage d’appoint',
+            'Start/Stopp-Automatik': 'Système Start/Stop automatique',
+            'TV': 'TV',
+            'Tagfahrlicht': 'Feux de jour',
+            'Tempomat': 'Régulateur de vitesse',
+            'Totwinkel-Assistent': 'Assistant d’angle mort',
+            'Touchscreen': 'Écran tactile',
+            'Traktionskontrolle': 'Contrôle de traction',
+            'Tuner/Radio': 'Radio',
+            'USB': 'USB',
+            'Verkehrszeichenerkennung': 'Reconnaissance des panneaux de signalisation',
+            'WLAN / Wifi Hotspot': 'Hotspot WLAN / Wifi',
+            'Winterpaket': 'Pack hiver',
+            'Winterreifen': 'Pneus hiver',
+            'Xenonscheinwerfer': 'Phares au xénon',
+            'Zentralverriegelung': 'Verrouillage centralisé',
+            'ABS': 'ABS'
+            }, inplace=True)
 
-    return preprocessed_df
+        return preprocessed_df
+    except Exception as e:
+        logging.error(f"Error in translate_df: {e}")
+        return None
 
 def translate_preprocessed_search_result(file_path):    
-    translate_df(file_path).to_excel("translated_preprocessed_df.xlsx", index=False)
-    print("Translated dataframe saved as 'translated_preprocessed_df.xlsx'")
+    try:
+        translated_df = translate_df(file_path)
+        if translated_df is not None:
+            translated_df.to_excel("translated_preprocessed_df.xlsx", index=False)
+            logging.info("Translated dataframe saved as 'translated_preprocessed_df.xlsx'")
+        else:
+            logging.error("Translation failed, dataframe not saved.")
+    except Exception as e:
+        logging.error(f"Error in translate_preprocessed_search_result: {e}")
 
-# # Example usage
+# Example usage
 # file_path = "preprocessed_search_result.xlsx"
 # translate_preprocessed_search_result(file_path)

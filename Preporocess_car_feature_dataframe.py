@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import numpy as np
 import logging
+from datetime import datetime
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.ERROR, 
@@ -22,9 +23,7 @@ def preprocess_dataframe(file_path):
         
         # Remove Brutto/Netto from Price
         if 'Brutto Price' in df.columns:
-            df['Brutto Price'] = df['Brutto Price'].apply(clean_price)
-        if 'Netto Price' in df.columns:
-            df['Netto Price'] = df['Netto Price'].apply(clean_price)
+            df['Brutto Price'] = df['Brutto Price'].apply(clean_price).astype(float)
         
         # Separate KW from PS
         if 'Leistung' in df.columns:
@@ -33,15 +32,15 @@ def preprocess_dataframe(file_path):
         
         # Convert Kilometerstand to numerical
         if 'Kilometerstand' in df.columns:
-            df['Kilometerstand'] = df['Kilometerstand'].apply(clean_kilometerstand)
+            df['Kilometerstand'] = df['Kilometerstand'].apply(clean_kilometerstand).astype(float)
         
         # Process Verbrauch and Energieverbrauch (komb.)2
         if 'Verbrauch' in df.columns or 'Energieverbrauch (komb.)2' in df.columns:
-            df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption(row, df), axis=1)
+            df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption(row, df), axis=1).astype(float)
+        
         average_consumption = df['Kraftstoffverbrauch'].mean()
         df['Kraftstoffverbrauch'].fillna(average_consumption, inplace=True)
-        average_consumption = df['Kraftstoffverbrauch'].mean()
-        df['Kraftstoffverbrauch'].fillna(average_consumption, inplace=True)
+        
         # Drop the Energieverbrauch (komb.)2 column
         df.drop(columns=['Energieverbrauch (komb.)2'], inplace=True, errors='ignore')
         
@@ -50,11 +49,14 @@ def preprocess_dataframe(file_path):
             df['Farbe'] = df['Farbe'].fillna(df['Farbe (Hersteller)'])
             df.drop(columns=['Farbe (Hersteller)'], inplace=True, errors='ignore')
         
+        # Convert Erstzulassung to age in years
+        if 'Erstzulassung' in df.columns:
+            df['Erstzulassung_years'] = df['Erstzulassung'].apply(convert_erstzulassung_to_age)
+        
         return df
     except Exception as e:
         logging.error(f"Error in preprocess_dataframe: {e}")
         return None
-
 
 def clean_price(price):
     try:
@@ -96,6 +98,17 @@ def extract_first_consumption(row, df):
         logging.error(f"Error in extract_first_consumption: {e}")
         return None
 
+def convert_erstzulassung_to_age(date_str):
+    try:
+        # Convert MM/YYYY to a datetime object
+        date_obj = datetime.strptime(date_str, "%m/%Y")
+        # Calculate the age of the car in years
+        age = (datetime.now() - date_obj).days / 365.25
+        return age
+    except Exception as e:
+        logging.error(f"Error in convert_erstzulassung_to_age: {e}")
+        return None
+
 def normalize(series, invert=False):
     try:
         normalized = (series - series.min()) / (series.max() - series.min())
@@ -106,150 +119,26 @@ def normalize(series, invert=False):
 
 def assign_scores(processed_df):
     try:
+        # Weights for scoring
         weights = {
-        'Brutto Price': 0.1,
-        'Kilometerstand': 0.15,
-        'Erstzulassung': 0.2,
-        'Leistung': 0.05,
-        'Getriebe': 0.05,
-        'Fahrzeughalter': 0.03,
-        'Kraftstoffart': 0.02,
-        'Fahrzeugzustand': 0.03,
-        'Kategorie': 0.02,
-        'Herkunft': 0.02,
-        'Hubraum': 0.03,
-        'Antriebsart': 0.02,
-        'Anzahl Sitzplätze': 0.02,
-        'Anzahl der Türen': 0.02,
-        'Schadstoffklasse': 0.02,
-        'Umweltplakette': 0.02,
-        'Anzahl der Fahrzeughalter': 0.01,
-        'HU': 0.01,
-        'Klimatisierung': 0.02,
-        'Einparkhilfe': 0.01,
-        'Airbags': 0.02,
-        'Farbe': 0.01,
-        'Innenausstattung': 0.01,
-        'ABS': 0.01,
-        'Abstandstempomat': 0.01,
-        'Abstandswarner': 0.01,
-        'Adaptives Kurvenlicht': 0.01,
-        'Alarmanlage': 0.01,
-        'Allradantrieb': 0.01,
-        'Allwetterreifen': 0.01,
-        'Ambiente-Beleuchtung': 0.01,
-        'Anhängerkupplung abnehmbar': 0.01,
-        'Anhängerkupplung fest': 0.01,
-        'Anhängerkupplung-Vorbereitung': 0.01,
-        'Armlehne': 0.01,
-        'Beheizbare Frontscheibe': 0.01,
-        'Beheizbares Lenkrad': 0.01,
-        'Berganfahrassistent': 0.01,
-        'Bi-Xenon Scheinwerfer': 0.01,
-        'Blendfreies Fernlicht': 0.01,
-        'Bluetooth': 0.01,
-        'Bordcomputer': 0.01,
-        'CD-Spieler': 0.01,
-        'Dachreling': 0.01,
-        'ESP': 0.01,
-        'Elektr. Fensterheber': 0.01,
-        'Elektr. Heckklappe': 0.01,
-        'Elektr. Seitenspiegel': 0.01,
-        'Elektr. Sitzeinstellung': 0.01,
-        'Elektr. Wegfahrsperre': 0.01,
-        'Fernlichtassistent': 0.01,
-        'Freisprecheinrichtung': 0.01,
-        'Gepäckraumabtrennung': 0.01,
-        'Geschwindigkeitsbegrenzer': 0.01,
-        'Innenspiegel autom. abblendend': 0.01,
-        'Isofix': 0.01,
-        'Kurvenlicht': 0.01,
-        'LED-Scheinwerfer': 0.01,
-        'LED-Tagfahrlicht': 0.01,
-        'Lederlenkrad': 0.01,
-        'Leichtmetallfelgen': 0.01,
-        'Lichtsensor': 0.01,
-        'Lordosenstütze': 0.01,
-        'Multi-CD-Wechsler': 0.01,
-        'Multifunktionslenkrad': 0.01,
-        'Musikstreaming integriert': 0.01,
-        'Müdigkeitswarner': 0.01,
-        'Navigationssystem': 0.01,
-        'Nebelscheinwerfer': 0.01,
-        'Nichtraucher-Fahrzeug': 0.01,
-        'Notbremsassistent': 0.01,
-        'Notrad': 0.01,
-        'Notrufsystem': 0.01,
-        'Pannenkit': 0.01,
-        'Panorama-Dach': 0.01,
-        'Partikelfilter': 0.01,
-        'Radio DAB': 0.01,
-        'Raucherpaket': 0.01,
-        'Regensensor': 0.01,
-        'Reifendruckkontrolle': 0.01,
-        'Reserverad': 0.01,
-        'Schaltwippen': 0.01,
-        'Scheckheftgepflegt': 0.01,
-        'Scheinwerferreinigung': 0.01,
-        'Schiebedach': 0.01,
-        'Schlüssellose Zentralverriegelung': 0.01,
-        'Servolenkung': 0.01,
-        'Sitzheizung': 0.01,
-        'Sitzheizung hinten': 0.01,
-        'Skisack': 0.01,
-        'Sommerreifen': 0.01,
-        'Soundsystem': 0.01,
-        'Sportfahrwerk': 0.01,
-        'Sportpaket': 0.01,
-        'Sportsitze': 0.01,
-        'Sprachsteuerung': 0.01,
-        'Spurhalteassistent': 0.01,
-        'Standheizung': 0.01,
-        'Start/Stopp-Automatik': 0.01,
-        'TV': 0.01,
-        'Tagfahrlicht': 0.01,
-        'Taxi': 0.01,
-        'Tempomat': 0.01,
-        'Totwinkel-Assistent': 0.01,
-        'Touchscreen': 0.01,
-        'Traktionskontrolle': 0.01,
-        'Tuner/Radio': 0.01,
-        'USB': 0.01,
-        'Verkehrszeichenerkennung': 0.01,
-        'WLAN / Wifi Hotspot': 0.01,
-        'Winterpaket': 0.01,
-        'Winterreifen': 0.01,
-        'Xenonscheinwerfer': 0.01,
-        'Zentralverriegelung': 0.01,
-        'KW': 0.01,
-        'PS': 0.01,
-        'Kraftstoffverbrauch': 0.01,
+            'Brutto Price': 0.5,
+            'Erstzulassung_years': 0.5,
         }
         
-        # Copy the original dataframe
+        # Normalize columns
         df_normalized = processed_df.copy()
-        
-        # Normalize and invert price and mileage
+        # use invert = True : the higher the normalized value (1) the lower the price for example
         df_normalized['Brutto Price'] = normalize(processed_df['Brutto Price'], invert=True)
-        df_normalized['Kilometerstand'] = normalize(processed_df['Kilometerstand'], invert=True)
-        
-        # Normalize fuel efficiency and horsepower
-        df_normalized['Kraftstoffverbrauch'] = normalize(processed_df['Kraftstoffverbrauch'])
-        df_normalized['PS'] = normalize(processed_df['PS'])
+        df_normalized['Erstzulassung_years'] = normalize(processed_df['Erstzulassung_years'], invert=True)
         
         # Calculate scores
         df_normalized['Score'] = (
             df_normalized['Brutto Price'] * weights['Brutto Price'] +
-            df_normalized['Kilometerstand'] * weights['Kilometerstand'] +
-            df_normalized['Kraftstoffverbrauch'] * weights['Kraftstoffverbrauch'] +
-            df_normalized['PS'] * weights['PS']
+            df_normalized['Erstzulassung_years'] * weights['Erstzulassung_years']
         )
         
         # Copy the Score column back to the original dataframe
         processed_df['Score'] = df_normalized['Score']
-        
-        # Delete the normalized dataframe
-        del df_normalized
         
         return processed_df
     except Exception as e:
@@ -272,7 +161,6 @@ def preprocess_search_list(file_path):
         logging.error(f"Error in preprocess_search_list: {e}")
         return None
 
-       
-
-file_path = "search_list_car_features_Alexander_diesel.xlsx" 
+# # # Call the preprocess_search_list function
+file_path = "search_list_car_features_GLK.xlsx" 
 preprocess_search_list(file_path)
