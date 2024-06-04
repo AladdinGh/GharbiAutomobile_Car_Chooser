@@ -1,7 +1,13 @@
 import re
 import pandas as pd
-from get_HTML_source_code_from_link import get_HTML_source_code_from_link
-from extract_car_info_from_HTML import extract_features_from_HTML
+from Helper_feature_extraction import get_HTML_source_code_from_link , extract_features_from_HTML
+import logging
+
+
+# Setup logging configuration
+logging.basicConfig(filename='processing.log', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 i = 0
 def get_car_features_from_search_result(html_file_path, output_excel_file):
@@ -29,11 +35,7 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
             source_pages.append(get_HTML_source_code_from_link(url)) 
             i = i+1
             print(i)
-            #print(get_HTML_source_code_from_link(url))
         
-        # to be replaced by this 
-        #source_pages = [get_HTML_source_code_from_link(url) for url in modified_urls]
-        # Extract key features from the HTML content and combine into a single DataFrame
         try:
             extracted_features_df_list = []
             for source_page in source_pages:
@@ -63,10 +65,6 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
         # Concatenate URL_df with extracted_features_df along columns (axis=1)
         Result_df = pd.concat([URL_df, extracted_features_df], axis=1)
 
-        # dump it for debugging
-        # csv_file_path = 'output.csv'
-        # Result_df.to_csv(csv_file_path, index=False)
-
         # Write the DataFrame to an Excel file
         Result_df.to_excel(output_excel_file, index=False)
 
@@ -78,7 +76,7 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
         print(f"Error: {e}")
 
 # Example usage:
-html_file_path = 'SuchErgebnis_Alexander.txt'
+html_file_path = 'SuchErgebnis_wasserstoff.txt'
 output_excel_file = 'search_list_car_features.xlsx'
 
 get_car_features_from_search_result(html_file_path, output_excel_file)

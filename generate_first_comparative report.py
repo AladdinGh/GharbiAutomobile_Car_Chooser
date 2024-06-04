@@ -9,24 +9,17 @@ import docx
 
 
 # Import custom modules
-from Preporocess_car_feature_dataframe import preprocess_search_list
-from Translate_preprocessed_data_frame import translate_preprocessed_search_result
+from Helper_report_generation import preprocess_search_list , translate_preprocessed_search_result
+
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
-    """
-    Add a hyperlink to a paragraph.
-
-    Args:
-        paragraph (docx.text.paragraph.Paragraph): The paragraph to add the hyperlink to.
-        url (str): The URL for the hyperlink.
-        text (str): The display text for the hyperlink.
-        color (str): The color of the hyperlink text.
-        underline (bool): Whether the hyperlink text should be underlined.
-    """
+ 
+    #Add a hyperlink to a paragraph.
+    
     # This gets access to the document.xml.rels file and gets a new relation id value
     part = paragraph.part
     r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
@@ -60,14 +53,8 @@ def add_hyperlink(paragraph, url, text, color="0000FF", underline=True):
     paragraph._p.append(hyperlink)
 
 def add_features_table(doc, car, features):
-    """
-    Add a table with car features to the Word document.
-
-    Args:
-        doc (Document): The Word document object.
-        car (Series): A pandas Series representing a car.
-        features (list): List of feature names.
-    """
+  
+    #Add a table with car features to the Word document.
     num_columns = 4  # Number of columns per row in the table
     table = doc.add_table(rows=1, cols=num_columns)
     table.style = 'Table Grid'
@@ -120,7 +107,7 @@ def print_report(file_path):
             doc.add_paragraph(f"Kilométrage : {car['Kilometerstand']} km")
             doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']}")
             doc.add_paragraph(f"Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe(constructeur)']}")
-            doc.add_paragraph(f"Prix : {car['Brutto Price']} EUR")
+            doc.add_paragraph(f"Prix brut: {car['Brutto Price']} EUR")
             
             # Add clickable URL
             p = doc.add_paragraph("URL : ")
@@ -144,14 +131,23 @@ def print_report(file_path):
 
 def prepare_and_print_report():
     try:
-        file_path = "search_list_car_features_Alexander_diesel.xlsx" 
-        preprocess_search_list(file_path)
         
+        logging.info("preprocessing ....")
+        file_path = "search_list_car_features.xlsx" 
+        preprocess_search_list(file_path)
+        logging.info("preprocessing finished !")
+        
+        
+        logging.info("Translating ....")
         file_path = "preprocessed_search_result.xlsx"
         translate_preprocessed_search_result(file_path)
+        logging.info("Translating finished !")
         
+        logging.info("Generating report ....")
         file_path = "translated_preprocessed_df.xlsx"
         print_report(file_path)
+        logging.info("Report generated !")
+        
     except Exception as e:
         logging.error(f"Error in prepare_and_print_report: {e}")
 
