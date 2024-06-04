@@ -334,12 +334,12 @@ def assign_scores(processed_df):
         df_normalized = processed_df.copy()
         # use invert = True : the higher the normalized value (1) the lower the price for example
         df_normalized['Brutto Price'] = normalize(processed_df['Brutto Price'], invert=True)
-        df_normalized['Erstzulassung_years'] = normalize(processed_df['Erstzulassung_years'], invert=True)
+        #df_normalized['Erstzulassung_years'] = normalize(processed_df['Erstzulassung_years'], invert=True)
         
         # Calculate scores
         df_normalized['Score'] = (
-            df_normalized['Brutto Price'] * weights['Brutto Price'] +
-            df_normalized['Erstzulassung_years'] * weights['Erstzulassung_years']
+            df_normalized['Brutto Price'] * weights['Brutto Price'] 
+            #+ df_normalized['Erstzulassung_years'] * weights['Erstzulassung_years']
         )
         
         # Copy the Score column back to the original dataframe
