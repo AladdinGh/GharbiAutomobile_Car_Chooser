@@ -4,7 +4,6 @@ from googletrans import Translator
 import spacy
 from tqdm import tqdm
 import re
-import numpy as np
 from datetime import datetime
 import requests
 
@@ -181,7 +180,7 @@ def translate_preprocessed_search_result(file_path):
     try:
         translated_df = translate_df(file_path)
         if translated_df is not None:
-            translated_df.to_excel("translated_preprocessed_df.xlsx", index=False)
+            translated_df.to_excel("2_translated_preprocessed_df.xlsx", index=False)
             logging.info("Translated dataframe saved as 'translated_preprocessed_df.xlsx'")
         else:
             logging.error("Translation failed, dataframe not saved.")
@@ -289,8 +288,17 @@ def extract_first_consumption(row, df):
 
 def convert_erstzulassung_to_age(date_str):
     try:
+        # Check if the input is empty
+        if not date_str:
+            raise ValueError("The date string is empty.")
+        
+        # Ensure the input is a string
+        if isinstance(date_str, float):
+            date_str = str(int(date_str))
+        
         # Convert MM/YYYY to a datetime object
         date_obj = datetime.strptime(date_str, "%m/%Y")
+        
         # Calculate the age of the car in years
         age = (datetime.now() - date_obj).days / 365.25
         return age
@@ -298,15 +306,6 @@ def convert_erstzulassung_to_age(date_str):
         logging.error(f"Error in convert_erstzulassung_to_age: {e}")
         return None
 
-def normalize(series, invert=False):
-    try:
-        normalized = (series - series.min()) / (series.max() - series.min())
-        return 1 - normalized if invert else normalized
-    except Exception as e:
-        logging.error(f"Error in normalize: {e}")
-        return series
-    
-    
 def shorten_url(long_url):
     try:
         response = requests.get(f'http://tinyurl.com/api-create.php?url={long_url}')
@@ -322,45 +321,17 @@ def shorten_url(long_url):
         return None
     
     
-def assign_scores(processed_df):
-    try:
-        # Weights for scoring
-        weights = {
-            'Brutto Price': 1.0,
-            'Erstzulassung_years': 0.0,
-        }
-        
-        # Normalize columns
-        df_normalized = processed_df.copy()
-        # use invert = True : the higher the normalized value (1) the lower the price for example
-        df_normalized['Brutto Price'] = normalize(processed_df['Brutto Price'], invert=True)
-        #df_normalized['Erstzulassung_years'] = normalize(processed_df['Erstzulassung_years'], invert=True)
-        
-        # Calculate scores
-        df_normalized['Score'] = (
-            df_normalized['Brutto Price'] * weights['Brutto Price'] 
-            #+ df_normalized['Erstzulassung_years'] * weights['Erstzulassung_years']
-        )
-        
-        # Copy the Score column back to the original dataframe
-        processed_df['Score'] = df_normalized['Score']
-        
-        return processed_df
-    except Exception as e:
-        logging.error(f"Error in assign_scores: {e}")
-        return None
+
 
 def preprocess_search_list(file_path):
     try:
         processed_df = preprocess_dataframe(file_path)
         if processed_df is not None:
-            processed_df = assign_scores(processed_df)
-            if processed_df is not None:
-                # Save the preprocessed DataFrame to Excel and CSV files
-                excel_file_path = 'preprocessed_search_result.xlsx'
-                processed_df.to_excel(excel_file_path, index=False)
-                logging.info("Preprocessed search result excel file saved")
-                return excel_file_path
+            # Save the preprocessed DataFrame to Excel and CSV files
+            excel_file_path = '1_preprocessed_search_result.xlsx'
+            processed_df.to_excel(excel_file_path, index=False)
+            logging.info("Preprocessed search result excel file saved")
+            return excel_file_path
         return None
     except Exception as e:
         logging.error(f"Error in preprocess_search_list: {e}")

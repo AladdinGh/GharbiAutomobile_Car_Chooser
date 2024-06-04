@@ -9,8 +9,8 @@ import docx
 
 
 # Import custom modules
-from Helper_report_generation import preprocess_search_list , translate_preprocessed_search_result
-
+from Helper_preprocess_translate import preprocess_search_list , translate_preprocessed_search_result
+from Assign_scores import assign_scores
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.INFO, 
@@ -100,14 +100,12 @@ def print_report(file_path):
         # Generate the textual report
         doc.add_heading('Rapport Comparatif des voitures sur www.mobile.de', level=1)
         doc.add_paragraph(f"Nous avons trouvé {len(df)} voitures correspondant à vos critères.")
-        doc.add_paragraph("\nLes 10 meilleures correspondances :")
         
         cpt = 0 
         for i, car in best_fit_cars.iterrows():
             cpt = cpt + 1 
             doc.add_paragraph(f"\n{car['Car Title']}", style='Title')
             doc.add_paragraph(f"\nNuméro de la voiture : {cpt}")
-            #doc.add_paragraph(f"Score : {car['Score']:.2f}")
             doc.add_paragraph(f"Kilométrage : {car['Kilometerstand']} km")
             doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']}")
             doc.add_paragraph(f"Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe(constructeur)']}")
@@ -128,27 +126,32 @@ def print_report(file_path):
                 doc.add_paragraph(f" {paragraph.strip()}")
 
         # Save the report to a Word document
-        doc.save("Rapport comparatif.docx")
-        logging.info("Report saved as 'Rapport comparatif.docx'")
+        doc.save("Rapport comparatif initial.docx")
+        logging.info("Report saved as 'Rapport comparatif initial.docx'")
     except Exception as e:
         logging.error(f"Error in print_report: {e}")
 
 def prepare_and_print_report():
     try:
         
-        # logging.info("preprocessing ....")
-        # file_path = "search_list_car_features.xlsx" 
-        # preprocess_search_list(file_path)
+        logging.info("preprocessing ....")
+        file_path = "search_list_car_features.xlsx" 
+        preprocess_search_list(file_path)
         
         
         
-        # logging.info("Translating ....")
-        # file_path = "preprocessed_search_result.xlsx"
-        # translate_preprocessed_search_result(file_path)
+        logging.info("Translating ....")
+        file_path = "1_preprocessed_search_result.xlsx"
+        translate_preprocessed_search_result(file_path)
+        
+        
+        logging.info("Assigning score ....")
+        file_path = "2_translated_preprocessed_df.xlsx"
+        assign_scores(file_path)
         
         
         logging.info("Generating report ....")
-        file_path = "translated_preprocessed_df.xlsx"
+        file_path = "3_translated_with_score_df.xlsx"
         print_report(file_path)
         
     except Exception as e:
