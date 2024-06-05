@@ -4,10 +4,8 @@ import re
 from docx import Document
 
 # Import custom modules
-from Helper_generate_report import  add_hyperlink, add_features_table
+from Helper_generate_report import  add_hyperlink, add_features_table, assign_scores_report
 from Helper_preprocess_translate import preprocess_search_list , translate_preprocessed_search_result
-
-from Assign_scores import assign_scores_report
 
 # Setup logging configuration
 logging.basicConfig(filename='processing.log', level=logging.INFO, 
@@ -66,20 +64,20 @@ def print_first_report(file_path):
 def prepare_and_print_first_report():
     try:
         
-        logging.info("preprocessing ....")
-        file_path = "search_list_car_features.xlsx" 
-        preprocess_search_list(file_path)
+        # logging.info("preprocessing ....")
+        # file_path = "search_list_car_features.xlsx" 
+        # preprocess_search_list(file_path)
         
         
         
-        logging.info("Translating ....")
-        file_path = "output/1_preprocessed_search_result.xlsx"
-        translate_preprocessed_search_result(file_path)
+        # logging.info("Translating ....")
+        # file_path = "output/1_preprocessed_search_result.xlsx"
+        # translate_preprocessed_search_result(file_path)
         
         
-        logging.info("Assigning score ....")
-        file_path = "output/2_translated_preprocessed_df.xlsx"
-        assign_scores_report(file_path,False)
+        # logging.info("Assigning score ....")
+        # file_path = "output/2_translated_preprocessed_df.xlsx"
+        # assign_scores_report(file_path,False)
         
         
         logging.info("Generating report ....")

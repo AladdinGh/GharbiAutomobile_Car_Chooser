@@ -80,6 +80,13 @@ def add_features_table(doc, car, features):
             cell._element.get_or_add_tcPr().append(tc_borders)
             
             
+def add_features_table_light(car, features):
+
+    cpt = 0 
+    for feature in features:
+        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in car.index and car[feature] == 1:
+            cpt = cpt + 1
+    return(cpt-1)           
 
 def copy_rows_by_index(df, indices_to_copy, index_column='index'):
     
@@ -101,3 +108,81 @@ def copy_rows_by_index(df, indices_to_copy, index_column='index'):
     except Exception as e:
         logging.error(f"Error in copy_rows_by_index: {e}")
         return pd.DataFrame()  # Return an empty DataFrame in case of error
+    
+    
+
+def normalize(series, invert=False):
+    try:
+        normalized = (series - series.min()) / (series.max() - series.min())
+        return 1 - normalized if invert else normalized
+    except Exception as e:
+        logging.error(f"Error in normalize: {e}")
+        return series
+    
+
+def assign_scores_report(file_path, use_weights_flag= False):
+    
+    try:
+                                                                        
+        df_translated = pd.read_excel(file_path)
+        # Weights for scoring
+        weights = {
+            'Brutto Price': 0.0,
+            'Erstzulassung_years': 1.0,
+        }
+        
+        # Normalize columns
+        df_temp = df_translated.copy()
+        # use invert = True : the higher the normalized value (1) the lower the price for example
+        df_temp['Brutto Price'] = normalize(df_temp['Brutto Price'], invert=True)
+        df_temp['Erstzulassung_years'] = normalize(df_temp['Erstzulassung_years'], invert=True)
+        
+        # we compute the score depending on the price only
+        if (use_weights_flag == False):
+            # Calculate scores
+            df_temp['Score'] = (
+                df_temp['Brutto Price'] * 1.0 
+            )
+            
+        # we compute the score depending on the other features   
+        else: 
+            # Calculate scores
+            df_temp['Score'] = (
+                df_temp['Brutto Price'] * weights['Brutto Price'] 
+                + df_temp['Erstzulassung_years'] * weights['Erstzulassung_years']
+            )
+        
+        # Copy the Score column back to the original dataframe
+        df_translated['Score'] = df_temp['Score'].round(2)
+        
+        if df_translated is not None:
+            if (use_weights_flag == False):
+                df_translated.to_excel("output/3_translated_preprocessed_sorted_by_price_for_initial_report.xlsx", index=False)
+                logging.info("scores are saved as '3_translated_preprocessed_sorted_by_price_for_initial_report.xlsx'")
+            else : 
+                df_translated.to_excel("output/3_translated_preprocessed_sorted_by_score_for_second_report.xlsx", index=False)
+                logging.info("scores are saved as '3_translated_preprocessed_sorted_by_score_for_second_report.xlsx'")
+        else:
+            logging.error("Assigning scores failed, dataframe not saved.")
+            
+    except Exception as e:
+        logging.error(f"Error in assign_scores: {e}")
+        return None
+    
+    
+def select_rows():
+    # Get user input for the indices to copy
+    indices_input = input("Enter the indices of the rows you want to copy, separated by commas: ")
+    
+    # Convert the input string to a list of integers
+    indices_to_copy = list(map(int, indices_input.split(',')))
+    
+    # Subtract 2 from all elements of indices_to_copy
+    adjusted_indices = [index - 1 for index in indices_to_copy]
+    
+    # Call the function to get a new DataFrame with the adjusted indices
+    file_path = "output/2_translated_preprocessed_df.xlsx"
+    df = pd.read_excel(file_path)
+    new_df = copy_rows_by_index(df, adjusted_indices)
+    new_df.to_excel("output/selected_rows_df.xlsx", index=False)
+    logging.info("Selected rows df saved as 'selected_rows_df.xlsx'")
