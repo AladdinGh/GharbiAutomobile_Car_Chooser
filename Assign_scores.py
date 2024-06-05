@@ -18,28 +18,38 @@ def normalize(series, invert=False):
         return series
     
 
-def assign_scores(file_path):
+def assign_scores_initial_report(file_path, use_weights_flag= False):
     
     try:
-        
+                                                                        
         df_translated = pd.read_excel(file_path)
         # Weights for scoring
         weights = {
-            'Brutto Price': 1.0,
-            'Erstzulassung_years': 0.0,
+            'Brutto Price': 0.0,
+            'Erstzulassung_years': 1.0,
         }
         
         # Normalize columns
         df_temp = df_translated.copy()
         # use invert = True : the higher the normalized value (1) the lower the price for example
         df_temp['Brutto Price'] = normalize(df_temp['Brutto Price'], invert=True)
-        #df_normalized['Erstzulassung_years'] = normalize(processed_df['Erstzulassung_years'], invert=True)
+        df_temp['Erstzulassung_years'] = normalize(df_temp['Erstzulassung_years'], invert=True)
         
-        # Calculate scores
-        df_temp['Score'] = (
-            df_temp['Brutto Price'] * weights['Brutto Price'] 
-            #+ df_temp['Erstzulassung_years'] * weights['Erstzulassung_years']
-        )
+        # we compute the score depending on the price only
+        if (use_weights_flag == False):
+            # Calculate scores
+            df_temp['Score'] = (
+                df_temp['Brutto Price'] * 1.0 
+                #+ df_temp['Erstzulassung_years'] * weights['Erstzulassung_years']
+            )
+            
+        # we compute the score depending on the other features   
+        else: 
+            # Calculate scores
+            df_temp['Score'] = (
+                df_temp['Brutto Price'] * weights['Brutto Price'] 
+                + df_temp['Erstzulassung_years'] * weights['Erstzulassung_years']
+            )
         
         # Copy the Score column back to the original dataframe
         df_translated['Score'] = df_temp['Score']
@@ -55,6 +65,7 @@ def assign_scores(file_path):
         return None
     
     
+
     
 # file_path = "translated_preprocessed_df.xlsx"
 # df_translated_with_scores = assign_scores(file_path)
