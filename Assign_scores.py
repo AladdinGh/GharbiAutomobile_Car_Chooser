@@ -3,7 +3,7 @@ import pandas as pd
 
 
 ''' 
-this is intended to assign scores to translated dataframes to avoid preprocessing and translating every time there is weights/importance changes
+this is intended to assign scores to translated dataframes to avoid preprocessing and translating every time there are weights/importance changes
 
 input : translated df
 output : translated df with scores which can be used within initial report and sencond report
@@ -18,7 +18,7 @@ def normalize(series, invert=False):
         return series
     
 
-def assign_scores_initial_report(file_path, use_weights_flag= False):
+def assign_scores_report(file_path, use_weights_flag= False):
     
     try:
                                                                         
@@ -40,7 +40,6 @@ def assign_scores_initial_report(file_path, use_weights_flag= False):
             # Calculate scores
             df_temp['Score'] = (
                 df_temp['Brutto Price'] * 1.0 
-                #+ df_temp['Erstzulassung_years'] * weights['Erstzulassung_years']
             )
             
         # we compute the score depending on the other features   
@@ -55,10 +54,14 @@ def assign_scores_initial_report(file_path, use_weights_flag= False):
         df_translated['Score'] = df_temp['Score']
         
         if df_translated is not None:
-            df_translated.to_excel("3_translated_with_score_df.xlsx", index=False)
-            logging.info("Translated dataframe saved as 'translated_preprocessed_df.xlsx'")
+            if (use_weights_flag == False):
+                df_translated.to_excel("output/3_translated_preprocessed_sorted_by_price_for_initial_report.xlsx", index=False)
+                logging.info("scores are saved as '3_translated_preprocessed_sorted_by_price_for_initial_report.xlsx'")
+            else : 
+                df_translated.to_excel("output/3_translated_preprocessed_sorted_by_score_for_second_report.xlsx", index=False)
+                logging.info("scores are saved as '3_translated_preprocessed_sorted_by_score_for_second_report.xlsx'")
         else:
-            logging.error("Translation failed, dataframe not saved.")
+            logging.error("Assigning scores failed, dataframe not saved.")
             
     except Exception as e:
         logging.error(f"Error in assign_scores: {e}")

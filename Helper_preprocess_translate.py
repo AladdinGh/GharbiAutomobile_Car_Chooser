@@ -6,8 +6,7 @@ from tqdm import tqdm
 import re
 from datetime import datetime
 import requests
-
-
+import math
 
 #########################################    Translate functions ######################################################
 # Setup logging configuration
@@ -180,7 +179,7 @@ def translate_preprocessed_search_result(file_path):
     try:
         translated_df = translate_df(file_path)
         if translated_df is not None:
-            translated_df.to_excel("2_translated_preprocessed_df.xlsx", index=False)
+            translated_df.to_excel("output/2_translated_preprocessed_df.xlsx", index=False)
             logging.info("Translated dataframe saved as 'translated_preprocessed_df.xlsx'")
         else:
             logging.error("Translation failed, dataframe not saved.")
@@ -241,6 +240,11 @@ def preprocess_dataframe(file_path):
         if 'Erstzulassung' in df.columns:
             df['Erstzulassung_years'] = df['Erstzulassung'].apply(convert_erstzulassung_to_age)
         
+        
+        # add the vehicle number as a columns to be used later on in the car identifation in report
+        df = df.reset_index()
+        
+        
         return df
     except Exception as e:
         logging.error(f"Error in preprocess_dataframe: {e}")
@@ -288,20 +292,21 @@ def extract_first_consumption(row, df):
 
 def convert_erstzulassung_to_age(date_str):
     try:
-        # Check if the input is empty
-        if not date_str:
-            raise ValueError("The date string is empty.")
-        
-        # Ensure the input is a string
-        if isinstance(date_str, float):
-            date_str = str(int(date_str))
-        
-        # Convert MM/YYYY to a datetime object
-        date_obj = datetime.strptime(date_str, "%m/%Y")
-        
-        # Calculate the age of the car in years
-        age = (datetime.now() - date_obj).days / 365.25
-        return age
+        # Check if the input is empty or NaN
+        if not date_str or (isinstance(date_str, float) and math.isnan(date_str)):
+            date_str = "01/1900"
+            #raise ValueError("The date string is empty or NaN.")
+        else:
+            # Ensure the input is a string
+            if isinstance(date_str, float):
+                date_str = str(int(date_str))
+            
+            # Convert MM/YYYY to a datetime object
+            date_obj = datetime.strptime(date_str, "%m/%Y")
+            
+            # Calculate the age of the car in years
+            age = (datetime.now() - date_obj).days / 365.25
+            return age
     except Exception as e:
         logging.error(f"Error in convert_erstzulassung_to_age: {e}")
         return None
@@ -328,7 +333,7 @@ def preprocess_search_list(file_path):
         processed_df = preprocess_dataframe(file_path)
         if processed_df is not None:
             # Save the preprocessed DataFrame to Excel and CSV files
-            excel_file_path = '1_preprocessed_search_result.xlsx'
+            excel_file_path = 'output/1_preprocessed_search_result.xlsx'
             processed_df.to_excel(excel_file_path, index=False)
             logging.info("Preprocessed search result excel file saved")
             return excel_file_path

@@ -77,6 +77,6 @@ def get_car_features_from_search_result(html_file_path, output_excel_file):
 
 # Example usage:
 html_file_path = 'SuchErgebnis_wasserstoff.txt'
-output_excel_file = 'search_list_car_features.xlsx'
+output_excel_file = 'output/search_list_car_features.xlsx'
 
 get_car_features_from_search_result(html_file_path, output_excel_file)
