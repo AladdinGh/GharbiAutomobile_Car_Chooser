@@ -85,20 +85,22 @@ def print_second_report(file_path):
                         run.font.color.rgb = RGBColor(0, 0, 0)  # Set font color to black
                         
 ###############################################################################################################
-        #cpt = 0 
+        doc.add_heading("Description détaillée de votre sélection", level=2)
         for i, car in best_fit_cars.iterrows():
             #cpt = cpt + 1 
             doc.add_paragraph(f"\n{car['Car Title']}", style='Title')
             doc.add_paragraph(f"Numéro de la voiture : {car['index']+1}")
-            doc.add_paragraph(f"Score : {car['Score']}")
-            doc.add_paragraph(f"Kilométrage : {car['Kilometerstand']} km")
-            doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']}")
+            doc.add_paragraph(f"Puissance : {car['KW']} KW")
+            doc.add_paragraph(f"Consommation : {car['Kraftstoffverbrauch']} L/100km")
+            doc.add_paragraph(f"Boite de vitesse : {car['Getriebe']}")
+            #doc.add_paragraph(f"carburant: {car['Kraftstoffart']}")
             doc.add_paragraph(f"Couleur : {car['Farbe'] if pd.notnull(car['Farbe']) else car['Farbe(constructeur)']}")
             doc.add_paragraph(f"Prix brut: {car['Brutto Price']} EUR")
             
+            
             # Add clickable URL
-            p = doc.add_paragraph("URL : ")
-            add_hyperlink(p, car['Short_URL'], car['Short_URL'])
+            # p = doc.add_paragraph("URL : ")
+            # add_hyperlink(p, car['Short_URL'], car['Short_URL'])
 
             doc.add_paragraph("Les options :")
             add_features_table(doc, car, df.columns)

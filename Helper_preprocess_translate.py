@@ -62,17 +62,17 @@ def translate_df(file_path):
         preprocessed_df = pd.read_excel(file_path)
         
         # Define the columns to be translated
-        columns_to_translate = ['Farbe', 'Description']
+        columns_to_translate = ['Farbe', 'Description', 'Getriebe']
         
         # Translate values in selected columns
         preprocessed_df['Description'] = preprocessed_df['Description'].astype(str)
         for col in columns_to_translate:
             preprocessed_df[col] = translate_column_values(preprocessed_df, col)
         
-        preprocessed_df.rename(columns={'Getriebe': 'Boite_vitesse', 'Kraftstoffart': 'carburant', 'Fahrzeugzustand': 'Etat_voiture'
-                           , 'Kategorie': 'categorie', 'Klimatisierung': 'climatisation'
-                           , 'Einparkhilfe': 'Aide_parking'
-                           , 'Innenausstattung': 'Options', 'Kraftstoffverbrauch': 'Consommation'}, inplace=True)
+        # preprocessed_df.rename(columns={'Getriebe': 'Boite_vitesse', 'Kraftstoffart': 'carburant', 'Fahrzeugzustand': 'Etat_voiture'
+        #                    , 'Kategorie': 'categorie', 'Klimatisierung': 'climatisation'
+        #                    , 'Einparkhilfe': 'Aide_parking'
+        #                    , 'Innenausstattung': 'Options', 'Kraftstoffverbrauch': 'Consommation'}, inplace=True)
 
         # Translation dictionary
         preprocessed_df.rename(columns={
@@ -225,7 +225,8 @@ def preprocess_dataframe(file_path):
         if 'Verbrauch' in df.columns or 'Energieverbrauch (komb.)2' in df.columns:
             df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption(row, df), axis=1).astype(float)
         
-        average_consumption = df['Kraftstoffverbrauch'].mean()
+        #average_consumption = df['Kraftstoffverbrauch'].mean()
+        average_consumption = 0.0
         df['Kraftstoffverbrauch'].fillna(average_consumption, inplace=True)
         
         # Drop the Energieverbrauch (komb.)2 column
