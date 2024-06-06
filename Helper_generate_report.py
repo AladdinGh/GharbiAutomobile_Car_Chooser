@@ -58,7 +58,7 @@ def add_features_table(doc, car, features):
     col_idx = 0
 
     for feature in features:
-        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in car.index and car[feature] == 1:
+        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter','Score'] and feature in car.index and car[feature] == 1:
             row_cells[col_idx].text = feature
             col_idx += 1
             if col_idx == num_columns:
@@ -84,7 +84,7 @@ def add_features_table_light(car, features):
 
     cpt = 0 
     for feature in features:
-        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter'] and feature in car.index and car[feature] == 1:
+        if feature not in ['Fahrzeughalter', 'Anzahl der Fahrzeughalter','Score'] and feature in car.index and car[feature] == 1:
             cpt = cpt + 1
     return(cpt-1)           
 

@@ -48,7 +48,7 @@ def print_second_report(file_path):
             hdr_cells[i].paragraphs[0].runs[0].font.name = 'Calibri'  # Set font name
         
         # Add data to the table
-        for idx, car in df.iterrows():
+        for idx, car in best_fit_cars.iterrows():
             row_cells = table.add_row().cells
             #row_cells[0].text = str(car['index']+1)  # Adjusting index to match your report
             row_cells[0].text = str(round(car['Score'], 2))  # Round score to 2 decimal places
