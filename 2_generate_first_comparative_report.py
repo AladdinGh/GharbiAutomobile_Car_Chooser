@@ -20,7 +20,6 @@ def print_first_report(file_path):
         
         # Rank cars based on scores
         df_sorted = df.sort_values(by='Score', ascending=False)
-        #best_fit_cars = df_sorted.head(10)
         best_fit_cars = df_sorted
 
         # Create a Word document
@@ -30,11 +29,9 @@ def print_first_report(file_path):
         doc.add_heading('Rapport Comparatif des voitures sur www.mobile.de', level=1)
         doc.add_paragraph(f"Nous avons trouvé {len(df)} voitures correspondant à vos critères.")
         
-        #cpt = 0 
         for i, car in best_fit_cars.iterrows():
-            #cpt = cpt + 1 
             doc.add_paragraph(f"\n{car['Car Title']}", style='Title')
-            doc.add_paragraph(f"Numéro de la voiture : {car['index']+1}")
+            doc.add_paragraph(f"Numéro de la voiture : {car.name + 1}")
             doc.add_paragraph(f"Score : {car['Score']}")
             doc.add_paragraph(f"Kilométrage : {car['Kilometerstand']} km")
             doc.add_paragraph(f"Date de mise en circulation : {car['Erstzulassung']}")
@@ -50,34 +47,35 @@ def print_first_report(file_path):
             doc.add_paragraph("Description :")
             
             # Format description into paragraphs
-            description = car['Description']
+            description = str(car['Description']) if pd.notnull(car['Description']) else ""
             paragraphs = re.split(r'[\n.]', description)
             for paragraph in paragraphs:
-                doc.add_paragraph(f" {paragraph.strip()}")
+                if paragraph.strip():  # Only add non-empty paragraphs
+                    doc.add_paragraph(paragraph.strip())
 
         # Save the report to a Word document
         doc.save("output/Rapport_comparatif_initial.docx")
         logging.info("Report saved as 'Rapport_comparatif_initial.docx'")
     except Exception as e:
-        logging.error(f"Error in print_report: {e}")
+        logging.error(f"Error in print_first_report: {e}")
 
 def prepare_and_print_first_report():
     try:
         
+        flag_portal = "autoscout"
         logging.info("preprocessing ....")
         file_path = "autoscout_search_list_car_features.xlsx" 
-        preprocess_search_list(file_path)
-        
+        preprocess_search_list(file_path,flag_portal)
         
         
         logging.info("Translating ....")
         file_path = "output/1_preprocessed_search_result.xlsx"
         translate_preprocessed_search_result(file_path)
         
-        
+        flag_use_weights = False
         logging.info("Assigning score ....")
         file_path = "output/2_translated_preprocessed_df.xlsx"
-        assign_scores_report(file_path,False)
+        assign_scores_report(file_path,flag_use_weights)
         
         
         logging.info("Generating report ....")

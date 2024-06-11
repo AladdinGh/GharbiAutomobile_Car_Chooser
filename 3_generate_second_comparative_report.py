@@ -106,8 +106,8 @@ def print_second_report(file_path):
             add_features_table(doc, car, df.columns)
             doc.add_paragraph("Description :")
             
-            # Format description into paragraphs
-            description = car['Description']
+            # Format description into paragraph
+            description = str(car['Description'])
             paragraphs = re.split(r'[\n.]', description)
             for paragraph in paragraphs:
                 doc.add_paragraph(f" {paragraph.strip()}")

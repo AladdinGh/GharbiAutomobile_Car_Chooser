@@ -4,16 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from Helper_feature_extraction_autoscout import get_HTML_source_code_from_link, extract_features_from_HTML
 
-def save_string_to_text_file(string, file_path):
-    """
-    Save a string to a text file.
-    
-    Args:
-        string (str): The string to save.
-        file_path (str): The path of the file where the string will be saved.
-    """
-    with open(file_path, 'w', encoding='utf-8') as file:
-        file.write(string)
+
 
 # Load the HTML file
 with open('SuchErgebnis_autoscout.txt', 'r', encoding='utf-8') as file:
@@ -68,8 +59,6 @@ try:
     extracted_features_df = pd.concat(extracted_features_df_list, ignore_index=True)
     print(extracted_features_df)
     
-    # convcert to strings to make easier to preprocess
-    extracted_features_df = extracted_features_df.astype(str)
     # Save the DataFrame as an Excel file
     extracted_features_df.to_excel('autoscout_search_list_car_features.xlsx', index=False)
     print("DataFrame saved as autoscout_search_list_car_features.xlsx")

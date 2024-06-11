@@ -7,6 +7,9 @@ import re
 from datetime import datetime
 import requests
 import math
+from bs4 import BeautifulSoup
+
+
 
 #########################################    Translate functions ######################################################
 # Setup logging configuration
@@ -189,7 +192,7 @@ def translate_preprocessed_search_result(file_path):
 ##############################################################################################################################
 
 ############################################### Preprocessing functions  #####################################################
-def preprocess_dataframe(file_path):
+def preprocess_dataframe_mobile(file_path):
     try:
         # Read the Excel file
         df = pd.read_excel(file_path)
@@ -210,7 +213,7 @@ def preprocess_dataframe(file_path):
         
         # Remove Brutto/Netto from Price
         if 'Brutto Price' in df.columns:
-            df['Brutto Price'] = df['Brutto Price'].apply(clean_price).astype(float)
+            df['Brutto Price'] = df['Brutto Price'].apply(clean_price_mobile).astype(float)
         
         # Separate KW from PS
         if 'Leistung' in df.columns:
@@ -223,7 +226,7 @@ def preprocess_dataframe(file_path):
         
         # Process Verbrauch and Energieverbrauch (komb.)2
         if 'Verbrauch' in df.columns or 'Energieverbrauch (komb.)2' in df.columns:
-            df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption(row, df), axis=1).astype(float)
+            df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption_mobile(row, df), axis=1).astype(float)
         
         #average_consumption = df['Kraftstoffverbrauch'].mean()
         average_consumption = 0.0
@@ -251,7 +254,85 @@ def preprocess_dataframe(file_path):
         logging.error(f"Error in preprocess_dataframe: {e}")
         return None
 
-def clean_price(price):
+
+def preprocess_dataframe_autoscout(file_path):
+    try:
+        # Read the Excel file
+        df = pd.read_excel(file_path)
+        
+        # remove dups
+        df = df.drop_duplicates()
+        
+        #shorten the URL
+        df['Short_URL'] = df['URL'].apply(shorten_url)
+        
+        # Create a Title column with the first three words of the Car Title
+        #df['Title'] = df['Car Title'].str.split().str[:3].str.join(' ')
+        
+        # Create a column for each equipment
+        if 'Equipment' in df.columns:
+            equipment_split = df['Equipment'].dropna().str.split(',').apply(lambda x: [s.strip() for s in x]).str.join('|').str.get_dummies()
+            df = pd.concat([df, equipment_split], axis=1)
+        
+        # Remove Brutto/Netto from Price
+        if 'Brutto Price' in df.columns:
+            df['Brutto Price'] = df['Brutto Price'].apply(clean_price_autoscout).astype(str)
+        
+        # Separate KW from PS
+        if 'Leistung' in df.columns:
+            df['KW'] = df['KW'].str.extract(r'(\d+)\s*kW', expand=False).astype(float)
+            df['PS'] = df['PS'].str.extract(r'(\d+)\s*PS', expand=False).astype(float)
+        
+        # Convert Kilometerstand to numerical
+        if 'Kilometerstand' in df.columns:
+            df['Kilometerstand'] = df['Kilometerstand'].apply(clean_kilometerstand).astype(float)
+        
+        # Process Verbrauch and Energieverbrauch (komb.)2
+        if 'Verbrauch' in df.columns or 'Energieverbrauch (komb.)2' in df.columns:
+            df['Kraftstoffverbrauch'] = df.apply(lambda row: extract_first_consumption_autoscout(row, df), axis=1).astype(float)
+        
+        #average_consumption = df['Kraftstoffverbrauch'].mean()
+        average_consumption = 0.0
+        df['Kraftstoffverbrauch'].fillna(average_consumption, inplace=True)
+        
+        # Drop the Energieverbrauch (komb.)2 column
+        df.drop(columns=['Energieverbrauch (komb.)2'], inplace=True, errors='ignore')
+        
+        # Update Farbe column
+        if 'Farbe (Hersteller)' in df.columns:
+            df['Farbe'] = df['Farbe'].fillna(df['Farbe (Hersteller)'])
+            df.drop(columns=['Farbe (Hersteller)'], inplace=True, errors='ignore')
+        
+        # Convert Erstzulassung to age in years
+        if 'Erstzulassung' in df.columns:
+            df['Erstzulassung_years'] = df['Erstzulassung'].apply(convert_erstzulassung_to_age)
+            
+            
+            
+        # Apply the function to the description column
+        df['Description'] = df['Description'].apply(clean_html)
+
+        
+        # add the vehicle number as a columns to be used later on in the car identifation in report
+        df = df.reset_index()
+        
+        
+        return df
+    except Exception as e:
+        logging.error(f"Error in preprocess_dataframe: {e}")
+        return None
+    
+# Function to clean HTML tags from a string
+def clean_html(raw_html):
+    try:
+        soup = BeautifulSoup(raw_html, 'html.parser')
+        return soup.get_text(separator=' ')
+    except Exception as e:
+        logging.error(f"Error in clean_html: {e}")
+        return None
+
+    
+def clean_price_mobile(price):
     try:
         if isinstance(price, str):
             match = re.search(r'(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*€', price)
@@ -261,18 +342,21 @@ def clean_price(price):
     except Exception as e:
         logging.error(f"Error in clean_price: {e}")
         return None
-
+    
+    
+def clean_price_autoscout(price):
+    # Remove euro sign, hyphen, and spaces
+    cleaned_price = price.replace('€', '').replace('-', '').replace(' ', '')
+    # Replace comma with period
+    cleaned_price = cleaned_price.replace('.', '')
+    cleaned_price = cleaned_price.replace(',', '')
+    return cleaned_price
+    
+    
 def clean_kilometerstand(km):
-    try:
-        if isinstance(km, str):
-            numeric_km = re.sub(r'[^\d]', '', km)
-            return int(numeric_km) if numeric_km else None
-        return None
-    except Exception as e:
-        logging.error(f"Error in clean_kilometerstand: {e}")
-        return None
+    return(km)
 
-def extract_first_consumption(row, df):
+def extract_first_consumption_mobile(row, df):
     try:
         if 'Verbrauch' in df.columns:
             verbrauch = row['Verbrauch']
@@ -290,6 +374,25 @@ def extract_first_consumption(row, df):
     except Exception as e:
         logging.error(f"Error in extract_first_consumption: {e}")
         return None
+
+def extract_first_consumption_autoscout(row, df):
+    try:
+        columns_to_check = ['Energieverbrauch (komb.)2', 'Kraftstoffverbrauch']
+        for column in columns_to_check:
+            if column in df.columns:
+                value = row[column]
+                if pd.notnull(value):
+                    # Convert value to string
+                    value_str = str(value)
+                    # Match pattern with optional preceding text and space
+                    match = re.search(r'(\d{1,2},\d)\s*l/100\s*km', value_str)
+                    if match:
+                        return float(match.group(1).replace(',', '.'))
+        return None
+    except Exception as e:
+        logging.error(f"Error in extract_first_consumption: {e}")
+        return None
+
 
 def convert_erstzulassung_to_age(date_str):
     try:
@@ -329,9 +432,15 @@ def shorten_url(long_url):
     
 
 
-def preprocess_search_list(file_path):
+def preprocess_search_list(file_path, flag_portal):
     try:
-        processed_df = preprocess_dataframe(file_path)
+        if (flag_portal == "autoscout"):
+            processed_df = preprocess_dataframe_autoscout(file_path)
+        elif (flag_portal == "mobile"):
+            processed_df = preprocess_dataframe_mobile(file_path)
+        else:
+            print("Check flag portal")
+        
         if processed_df is not None:
             # Save the preprocessed DataFrame to Excel and CSV files
             excel_file_path = 'output/1_preprocessed_search_result.xlsx'

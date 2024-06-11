@@ -75,39 +75,49 @@ def extract_features_from_HTML(html_content, url):
     try:
         listing_details = json_data['props']['pageProps']['listingDetails']
     except Exception as e:
+        print(f"Error: {e}")
         listing_details = json_data['props']['pageProps']['properData']['carDetails']
        
     try:
         vehicle_details = json_data['props']['pageProps']['listingDetails']['vehicle']
     except Exception as e:
+        print(f"Error: {e}")
         vehicle_details = json_data['props']['pageProps']['properData']['carDetails']['vehicle']
         
     try:
         prices = json_data['props']['pageProps']['listingDetails']['prices']['public']['price']
     except Exception as e:
+        print(f"Error: {e}")
         prices = json_data['props']['pageProps']['properData']['carDetails']['price']['value']['raw']
         
     try:
         description = json_data['props']['pageProps']['listingDetails']['description']
     except Exception as e:
+        print(f"Error: {e}")
         description = " "
          
     try:
         make = json_data['props']['pageProps']['listingDetails']['vehicle']['make']
         model = json_data['props']['pageProps']['listingDetails']['vehicle']['model']
+        second_title = json_data['props']['pageProps']['listingDetails']['vehicle']['modelVersionInput']
     except Exception as e:
         make = json_data['props']['pageProps']['properData']['carDetails']['make']  
         model = json_data['props']['pageProps']['properData']['carDetails']['model']  
+        second_title = json_data['props']['pageProps']['properData']['carDetails']['modelVersion'] 
     
     # Extract fuel consumption information
     try: 
-        consumption = vehicle_details['fuelConsumptionCombined']
+        consumption = vehicle_details['fuelConsumptionCombined']['raw']
         if consumption is None:
-            consumption = " "
-        else:
-            consumption = vehicle_details['fuelConsumptionCombined']['formatted'] 
+            consumption = vehicle_details['fuelConsumptionCombined']['raw'] 
+            if consumption is None:
+                consumption = vehicle_details['wltp']['consumptionCombinedWithFallback']['raw']
+            else:                    
+                consumption = " "
+
     except Exception as e:
-        consumption = vehicle_details['wltp']['consumptionCombinedWithFallback']['formatted']
+        print(f"Error: {e}")
+        
 
     # Extract CO2 emissions information
     try:
@@ -122,7 +132,7 @@ def extract_features_from_HTML(html_content, url):
     data = {
         "Car Title": f"{make} {model}",
         "URL": url,
-        "Title": "",  # Title not provided in the original data
+        "Title": second_title,
         "Secondary Title": "",  # Secondary title not provided in the original data
         "Brutto Price": prices,
         "Netto Price": "",  # Netto price not provided in the original data
@@ -184,6 +194,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             comfort_and_convenience_ids = []
     except Exception as e:
+        print(f"Error: {e}")
         comfort_and_convenience_ids = []
         pass
     
@@ -196,6 +207,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             entertainment_and_media_ids = []
     except Exception as e:
+        print(f"Error: {e}")
         entertainment_and_media_ids = []
         pass
     
@@ -208,6 +220,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             safety_and_security_ids = []
     except Exception as e:
+        print(f"Error: {e}")
         safety_and_security_ids = []
         pass
     
@@ -220,6 +233,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             extras_ids = []
     except Exception as e:
+        print(f"Error: {e}")
         extras_ids = []
         pass
 

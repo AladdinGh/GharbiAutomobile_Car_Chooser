@@ -143,7 +143,7 @@ def assign_scores_report(file_path, use_weights_flag= False):
             df_temp['Score'] = (
                 df_temp['Brutto Price'] * 1.0 
             )
-            
+   
         # we compute the score depending on the other features   
         else: 
             # Calculate scores
@@ -171,7 +171,7 @@ def assign_scores_report(file_path, use_weights_flag= False):
     
     
 def select_rows():
-    # Get user input for the indices to copy
+    # Get user input for the indices to copy, the desired cars
     indices_input = input("Enter the indices of the rows you want to copy, separated by commas: ")
     
     # Convert the input string to a list of integers
