@@ -75,25 +75,25 @@ def extract_features_from_HTML(html_content, url):
     try:
         listing_details = json_data['props']['pageProps']['listingDetails']
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error listing_details : {e}")
         listing_details = json_data['props']['pageProps']['properData']['carDetails']
        
     try:
         vehicle_details = json_data['props']['pageProps']['listingDetails']['vehicle']
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error vehicle_details: {e}")
         vehicle_details = json_data['props']['pageProps']['properData']['carDetails']['vehicle']
         
     try:
         prices = json_data['props']['pageProps']['listingDetails']['prices']['public']['price']
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error prices: {e}")
         prices = json_data['props']['pageProps']['properData']['carDetails']['price']['value']['raw']
         
     try:
         description = json_data['props']['pageProps']['listingDetails']['description']
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error description: {e}")
         description = " "
          
     try:
@@ -109,24 +109,30 @@ def extract_features_from_HTML(html_content, url):
     try: 
         consumption = vehicle_details['fuelConsumptionCombined']['raw']
         if consumption is None:
-            consumption = vehicle_details['fuelConsumptionCombined']['raw'] 
+            consumption = vehicle_details['wltp']['consumptionCombinedWithFallback']['raw'] 
             if consumption is None:
-                consumption = vehicle_details['wltp']['consumptionCombinedWithFallback']['raw']
-            else:                    
-                consumption = " "
+                consumption = vehicle_details['fuelConsumptionCombined']['raw']
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error consumption: {e}")
+        consumption = " "
+        
+
         
 
     # Extract CO2 emissions information
     try:
-        emissions = vehicle_details['co2EmissionsCombinedWithFallback']['formatted']
-    except (KeyError, TypeError):
+        emissions = vehicle_details['co2EmissionsCombinedWithFallback']['raw']
+        
+    except Exception as e:
+        
         if vehicle_details.get('wltp') and vehicle_details['wltp'].get('co2EmissionsCombinedWithFallback'):
-            emissions = vehicle_details['wltp']['co2EmissionsCombinedWithFallback']['formatted']
+            emissions = vehicle_details['wltp']['co2EmissionsCombinedWithFallback']['raw']
         else:
-            emissions = " "
+            emissions = vehicle_details['co2emissionInGramPerKmWithFallback']['raw']   
+        print(f"Error emissions: {e}")
+        
+       
             
     # Flatten the data structure into a dictionary
     data = {
@@ -194,7 +200,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             comfort_and_convenience_ids = []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in comfort_and_convenience_ids: {e}")
         comfort_and_convenience_ids = []
         pass
     
@@ -207,7 +213,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             entertainment_and_media_ids = []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in entertainment_and_media_ids: {e}")
         entertainment_and_media_ids = []
         pass
     
@@ -220,7 +226,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             safety_and_security_ids = []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error safety_and_security_ids: {e}")
         safety_and_security_ids = []
         pass
     
@@ -233,7 +239,7 @@ def extract_features_from_HTML(html_content, url):
         else:
             extras_ids = []
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error in extras_ids: {e}")
         extras_ids = []
         pass
 
@@ -243,16 +249,17 @@ def extract_features_from_HTML(html_content, url):
 
     # Convert the data dictionary to a DataFrame and save it as an Excel file
     df = pd.DataFrame([data])
-    # df.to_excel('autoscout_search_list_car_features.xlsx', index=False)
+    df.to_excel('autoscout_search_list_car_features.xlsx', index=False)
     
     return df
 
 # # Example usage:
-# url = 'https://www.autoscout24.de/smyle/details/0630c62a-5ee9-4751-9bfb-a8e62e19c3fa/'  # Example URL
+# url = 'https://www.autoscout24.de/smyle/details/00cfde42-1520-4a87-b746-4790105a784b/'  # Example URL
 # page_source = get_HTML_source_code_from_link(url)
 
 # if page_source:
 #     print("Page source code successfully retrieved.")
+#     print("Extracting features....")
 #     extract_features_from_HTML(page_source, url)
 # else:
 #     print("Failed to retrieve page source code.")

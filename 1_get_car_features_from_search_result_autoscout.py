@@ -6,7 +6,7 @@ from Helper_feature_extraction_autoscout import get_HTML_source_code_from_link, 
 
 
 
-# Load the HTML file
+# Read the HTML content from the file
 with open('SuchErgebnis_autoscout.txt', 'r', encoding='utf-8') as file:
     html_content = file.read()
 
@@ -14,23 +14,23 @@ with open('SuchErgebnis_autoscout.txt', 'r', encoding='utf-8') as file:
 soup = BeautifulSoup(html_content, 'html.parser')
 script_tags = soup.find_all('script', {'type': 'application/json'})
 
-# Extract JSON data containing listings
-listings_json = None
-for script_tag in script_tags:
-    if 'listings' in script_tag.string:
-        listings_json = script_tag.string
-        break
-
 # Initialize a list to store dictionaries of attributes
 all_listings_attributes = []
 
-# Extract attributes of the listings, mainly the URLs to get car features
-if listings_json:
-    listings_data = json.loads(listings_json)
-    listings = listings_data['props']['pageProps']['listings']
+# Extract JSON data containing listings from each script tag
+for script_tag in script_tags:
+    if 'listings' in script_tag.string:
+        listings_json = script_tag.string
+        listings_data = json.loads(listings_json)
+        listings = listings_data['props']['pageProps']['listings']
+        all_listings_attributes.extend(listings)
+
+# Now all_listings_attributes contains attributes from all JSON data in the HTML file
+# print(len(all_listings_attributes))
+# input()
 
 # Convert list of dictionaries to DataFrame
-URL_df = pd.DataFrame(listings)
+URL_df = pd.DataFrame(all_listings_attributes)
 
 # Add prefix to the 'url' attribute
 URL_df['url'] = 'https://www.autoscout24.de' + URL_df['url']

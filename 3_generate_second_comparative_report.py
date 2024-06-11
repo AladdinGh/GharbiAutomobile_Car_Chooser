@@ -34,10 +34,10 @@ def print_second_report(file_path):
         
         
          # Add the table with the specified columns
-        table = doc.add_table(rows=1, cols=7)
+        table = doc.add_table(rows=1, cols=8)
         table.style = 'Table Grid'
         # Define the headers
-        headers = ["Score", "Titre", "Prix brut", "Kilométrage", "Date Circulation", "Nombre d'options", "Lien"]
+        headers = ["Score", "N:° ","Titre", "Prix brut", "Kilométrage", "Date Circulation", "Nombre d'options", "Lien"]
         hdr_cells = table.rows[0].cells
         for i, header in enumerate(headers):
             hdr_cells[i].text = header
@@ -50,17 +50,17 @@ def print_second_report(file_path):
         # Add data to the table
         for idx, car in best_fit_cars.iterrows():
             row_cells = table.add_row().cells
-            #row_cells[0].text = str(car['index']+1)  # Adjusting index to match your report
-            row_cells[0].text = str(round(car['Score'], 2))  # Round score to 2 decimal places
-            row_cells[1].text = car['Car Title']
-            row_cells[2].text = f"{car['Brutto Price']}"
-            row_cells[3].text = f"{car['Kilometerstand']}"
-            row_cells[4].text = str(car['Erstzulassung'])  # Convert to string to avoid TypeError
-            row_cells[5].text = str(add_features_table_light(car, df.columns))   # Count number of options
+            row_cells[0].text = str(car['index']+1)  # Adjusting index to match your report
+            row_cells[1].text = str(round(car['Score'], 2))  # Round score to 2 decimal places
+            row_cells[2].text = car['Car Title']
+            row_cells[3].text = f"{car['Brutto Price']}"
+            row_cells[4].text = f"{car['Kilometerstand']}"
+            row_cells[5].text = str(car['Erstzulassung'])  # Convert to string to avoid TypeError
+            row_cells[6].text = str(add_features_table_light(car, df.columns))   # Count number of options
             
             # Add hyperlink to cell if URL is not empty
             if car['Short_URL']:
-                add_hyperlink(row_cells[6].paragraphs[0], car['Short_URL'], car['Short_URL'])
+                add_hyperlink(row_cells[7].paragraphs[0], car['Short_URL'], car['Short_URL'])
             
             # Apply font and style to data cells
             for cell in row_cells:

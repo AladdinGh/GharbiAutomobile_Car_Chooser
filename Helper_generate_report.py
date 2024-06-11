@@ -135,7 +135,7 @@ def assign_scores_report(file_path, use_weights_flag= False):
         df_temp = df_translated.copy()
         # use invert = True : the higher the normalized value (1) the lower the price for example
         df_temp['Brutto Price'] = normalize(df_temp['Brutto Price'], invert=True)
-        df_temp['Erstzulassung_years'] = normalize(df_temp['Erstzulassung_years'], invert=True)
+        df_temp['Erstzulassung_years'] = normalize(df_temp['Erstzulassung_years'], invert=False)
         
         # we compute the score depending on the price only
         if (use_weights_flag == False):
