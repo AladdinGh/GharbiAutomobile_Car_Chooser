@@ -6,6 +6,14 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.edge.service import Service as EdgeService
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+
+
+import random
+
 
 def extract_netto_price(prices):
     netto_price = ''  # Default value for netto price
@@ -23,7 +31,7 @@ def extract_netto_price(prices):
 
 
 
-def extract_features_from_HTML(html_content):
+def extract_features_from_HTML_mobile(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Extract specific elements from the HTML using BeautifulSoup
@@ -100,45 +108,74 @@ def extract_features_from_HTML(html_content):
     print(df)
     return df
 
-
+      
 def get_HTML_source_code_from_link(url):
-    # Specify the path to the Microsoft Edge WebDriver executable
-    edge_driver_path = r"C:\Users\c95031653\Downloads\edgedriver_win64\msedgedriver.exe"  # Change this to your Edge WebDriver path
-
-    # Set up Microsoft Edge WebDriver options
+    
+    edge_driver_path = r"C:\Users\c95031653\Downloads\edgedriver_win64\msedgedriver.exe"
     edge_options = Options()
     edge_service = EdgeService(executable_path=edge_driver_path)
-    # Add any specific options if needed (e.g., headless mode)
-    # edge_options.use_chromium = True  # Ensure using Edge Chromium
-    # edge_options.add_argument('--headless')  # Uncomment to run in headless mode
-    # edge_options.add_argument('--disable-gpu')  # If running in headless mode
 
+    # proxy = "http://127.0.0.1:9000/localproxy-7944404c"
+    # edge_options.add_argument(f'--proxy-server={proxy}')
+    edge_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+    
     driver = None
     try:
-        # Initialize Edge WebDriver with options
-        driver = webdriver.Edge(service=edge_service)
-
-        # Open the URL in Microsoft Edge
+        driver = webdriver.Edge(service=edge_service, options=edge_options)
         driver.get(url)
-        
-        # Wait for the page to load (adjust sleep time as needed)
-        time.sleep(20)  # Wait for 20 seconds (you can adjust this based on your page load time)
-        
-        # Get the page source
+        time.sleep(1)
         page_source = driver.page_source
-        
         return page_source
-
     except Exception as e:
         print(f"An error occurred: {e}")
         return None
-
     finally:
         if driver:
-            # Quit the WebDriver session
             driver.quit()
+ 
+            
+# def get_HTML_source_code_from_link(url):
+    
+#     # Set up Chrome options
+#     chrome_options = webdriver.ChromeOptions()
+#     chrome_options.add_argument("--headless")  # Run in headless mode (optional)
+#     chrome_options.add_argument("--disable-gpu")
+#     chrome_options.add_argument("--no-sandbox")
+#     chrome_options.add_argument("--disable-dev-shm-usage")
+#     chrome_options.add_argument("user-agent=your custom user agent string")
+#     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-# Example usage:
+    
+#     # Initialize the Chrome driver
+#     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    
+#     # Open the website
+#     driver.get(url)
+    
+#     # appear more like a real user
+#     cookies = driver.get_cookies()
+#     for cookie in cookies:
+#         driver.add_cookie(cookie)
+    
+    
+#     # Allow some time for the page to load
+
+#     time.sleep(random.uniform(2, 5))  # Random delay between 2 to 5 seconds
+#     source_page = driver.page_source
+    
+#     with open('source_code_test.txt', 'w', encoding='utf-8') as file:
+#         file.write(source_page)
+    
+#     # Quit the driver
+#     driver.quit()
+        
+    
+# url = 'https://suchen.mobile.de/fahrzeuge/details.html?id=391618886&dam=false&fr=2010%3A2013&isSearchRequest=true&ms=24100%3B28%3B%3B&pageNumber=8&ref=srp&refId=e6f455f4-559a-2018-58f7-c3f8d92181c6&s=Car&sb=rel&searchId=e6f455f4-559a-2018-58f7-c3f8d92181c6&vc=Car'    
+# get_HTML_source_code_from_link(url)   
+    
+    
+    
+    # Example usage:
 # url = 'https://suchen.mobile.de/fahrzeuge/details.html?id=392195401&action=eyeCatcher&dam=false&fr=2022%3A&isSearchRequest=true&rd=100&ref=srp&refId=dbeec509-3508-8775-d4af-b95365158750&s=Car&sb=rel&searchId=dbeec509-3508-8775-d4af-b95365158750&vc=Car'
 # page_source = get_HTML_source_code_from_link(url)
 

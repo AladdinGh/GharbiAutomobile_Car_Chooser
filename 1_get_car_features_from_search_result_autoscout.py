@@ -2,7 +2,7 @@ import pandas as pd
 import json
 import requests
 from bs4 import BeautifulSoup
-from Helper_feature_extraction_autoscout import get_HTML_source_code_from_link, extract_features_from_HTML
+from Helper_feature_extraction_autoscout import get_HTML_source_code_from_link, extract_features_from_HTML_autoscout
 
 
 
@@ -50,7 +50,7 @@ try:
         source_pages.append(source_page)
         
         # Extract features and add to the list
-        extracted_features_df_list.append(extract_features_from_HTML(source_page, url))
+        extracted_features_df_list.append(extract_features_from_HTML_autoscout(source_page, url))
         
         i += 1
         print(f"Processed {i} URLs")
@@ -66,3 +66,5 @@ try:
 except Exception as e:
     print(f"Error: {e}")
     print("Problem with extracting features")
+
+

@@ -53,7 +53,7 @@ def get_HTML_source_code_from_link(url):
             # Quit the WebDriver session
             driver.quit()
 
-def extract_features_from_HTML(html_content, url):
+def extract_features_from_HTML_autoscout(html_content, url):
     """
     Extract features from the HTML content of a car listing webpage and map them to the specified DataFrame header.
     
